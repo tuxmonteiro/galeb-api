@@ -1,4 +1,4 @@
-package com.openvraas.services.manager.jaxrs;
+package com.openvraas.services.api.jaxrs;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,7 +33,7 @@ import com.openvraas.core.model.Farm;
 import com.openvraas.hazelcast.IEventBus;
 
 @Path("/")
-public class ManagerResources {
+public class ApiResources {
 
     @Context UriInfo uriInfo;
 
@@ -59,7 +59,7 @@ public class ManagerResources {
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@PathParam("ENTITY_TYPE") String entityType) {
 
-        final Farm farm = ((ManagerApplication) application).getFarm();
+        final Farm farm = ((ApiApplication) application).getFarm();
 
         if (Farm.class.getSimpleName().toLowerCase().equals(entityType)) {
             return Response.ok(JsonObject.toJson(farm)).build();
@@ -110,7 +110,7 @@ public class ManagerResources {
             Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
             entityIdFromEntity = entity.getId();
 
-            final IEventBus eventBus = ((ManagerApplication) application).getEventBus();
+            final IEventBus eventBus = ((ApiApplication) application).getEventBus();
 
             eventBus.publishEntity(entity, entityType, Action.ADD);
 
@@ -143,7 +143,7 @@ public class ManagerResources {
             Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
             entityIdFromEntity = entity.getId();
 
-            final IEventBus eventBus = ((ManagerApplication) application).getEventBus();
+            final IEventBus eventBus = ((ApiApplication) application).getEventBus();
 
             eventBus.publishEntity(entity, entityType, Action.CHANGE);
 
@@ -176,7 +176,7 @@ public class ManagerResources {
             Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
             entityIdFromEntity  = entity.getId();
 
-            final IEventBus eventBus = ((ManagerApplication) application).getEventBus();
+            final IEventBus eventBus = ((ApiApplication) application).getEventBus();
 
             eventBus.publishEntity(entity, entityType, Action.DEL);
 
@@ -191,7 +191,7 @@ public class ManagerResources {
 
     private String getEntity(String entityType, String id) {
 
-        final Farm farm = ((ManagerApplication) application).getFarm();
+        final Farm farm = ((ApiApplication) application).getFarm();
         String result = "";
 
         EntityController entityController = farm.getEntityMap().get(entityType);

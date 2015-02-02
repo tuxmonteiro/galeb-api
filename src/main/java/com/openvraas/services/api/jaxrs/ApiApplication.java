@@ -1,4 +1,4 @@
-package com.openvraas.services.manager.jaxrs;
+package com.openvraas.services.api.jaxrs;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -8,18 +8,18 @@ import javax.ws.rs.core.Application;
 
 import com.openvraas.core.model.Farm;
 import com.openvraas.hazelcast.IEventBus;
-import com.openvraas.services.manager.Manager;
+import com.openvraas.services.api.Api;
 
 @ApplicationPath("/")
-public class ManagerApplication extends Application {
+public class ApiApplication extends Application {
 
     private Farm farm;
 
     private IEventBus eventBus;
 
-    public Application setManager(final Manager manager) {
-        this.farm = manager.getFarm();
-        this.eventBus = manager.getEventBus();
+    public Application setManager(final Api api) {
+        this.farm = api.getFarm();
+        this.eventBus = api.getEventBus();
         return this;
     }
 
@@ -34,7 +34,7 @@ public class ManagerApplication extends Application {
     @Override
     public Set<Class<?>> getClasses() {
         Set<Class<?>> classes = new HashSet<>();
-        classes.add(ManagerResources.class);
+        classes.add(ApiResources.class);
         return classes;
     }
 }

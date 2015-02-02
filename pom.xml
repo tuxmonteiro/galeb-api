@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.openvraas</groupId>
-  <artifactId>openvraas-manager</artifactId>
+  <artifactId>openvraas-api</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 
   <licenses>
@@ -148,7 +148,7 @@
         <configuration>
         <archive>
           <manifest>
-            <mainClass>com.openvraas.services.manager.Starter</mainClass>
+            <mainClass>com.openvraas.services.api.Starter</mainClass>
             <addClasspath>true</addClasspath>
           </manifest>
         </archive>

@@ -1,4 +1,4 @@
-package com.openvraas.services.manager;
+package com.openvraas.services.api;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,10 +6,10 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 import com.openvraas.services.AbstractService;
-import com.openvraas.services.manager.jaxrs.ManagerApplication;
+import com.openvraas.services.api.jaxrs.ApiApplication;
 import com.openvraas.undertow.jaxrs.Deployer;
 
-public class Manager extends AbstractService {
+public class Api extends AbstractService {
 
     private static final String PROP_MANAGER_PREFIX    = "com.openvraas.manager.";
 
@@ -39,14 +39,14 @@ public class Manager extends AbstractService {
 
         new Deployer().setHost("0.0.0.0")
                       .setPort(port)
-                      .deploy(new ManagerApplication().setManager(this))
+                      .deploy(new ApiApplication().setManager(this))
                       .setOptions(options)
                       .start();
 
         onLog("DEBUG", "[0.0.0.0:"+String.valueOf(port)+"] ready");
     }
 
-    public Manager() {
+    public Api() {
         super();
     }
 
