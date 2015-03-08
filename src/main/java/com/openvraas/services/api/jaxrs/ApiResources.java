@@ -48,14 +48,13 @@ public class ApiResources {
     private boolean entityExist = false;
 
     @GET
-    @Path("/")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getNull() {
        return Response.status(Status.FORBIDDEN).build(); //$NON-NLS-1$
     }
 
     @GET
-    @Path("/{ENTITY_TYPE}")
+    @Path("{ENTITY_TYPE}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@PathParam("ENTITY_TYPE") String entityType) {
 
@@ -74,7 +73,7 @@ public class ApiResources {
     }
 
     @GET
-    @Path("/{ENTITY_TYPE}/{ENTITY_ID}")
+    @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getOne() {
 
@@ -89,14 +88,13 @@ public class ApiResources {
     }
 
     @POST
-    @Path("/")
     @Produces(MediaType.TEXT_PLAIN)
     public Response postNull() {
        return Response.status(Status.FORBIDDEN).build();
     }
 
     @POST
-    @Path("/{ENTITY_TYPE}")
+    @Path("{ENTITY_TYPE}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
     @SuppressWarnings("finally")
@@ -123,14 +121,13 @@ public class ApiResources {
     }
 
     @PUT
-    @Path("/")
     @Produces(MediaType.TEXT_PLAIN)
     public Response putNull() {
        return Response.status(Status.FORBIDDEN).build();
     }
 
     @PUT
-    @Path("/{ENTITY_TYPE}/{ENTITY_ID}")
+    @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
     @SuppressWarnings("finally")
@@ -156,14 +153,13 @@ public class ApiResources {
     }
 
     @DELETE
-    @Path("/")
     @Produces(MediaType.TEXT_PLAIN)
     public Response deleteNull() {
        return Response.status(Status.FORBIDDEN).build();
     }
 
     @DELETE
-    @Path("/{ENTITY_TYPE}/{ENTITY_ID}")
+    @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
     @SuppressWarnings("finally")
