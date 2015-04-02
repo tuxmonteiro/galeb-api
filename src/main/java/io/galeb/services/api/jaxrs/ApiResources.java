@@ -25,12 +25,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
-import com.openvraas.core.controller.EntityController;
-import com.openvraas.core.controller.EntityController.Action;
-import com.openvraas.core.json.JsonObject;
-import com.openvraas.core.model.Entity;
-import com.openvraas.core.model.Farm;
-import com.openvraas.hazelcast.IEventBus;
+import io.galeb.core.controller.EntityController;
+import io.galeb.core.controller.EntityController.Action;
+import io.galeb.core.json.JsonObject;
+import io.galeb.core.model.Entity;
+import io.galeb.core.model.Farm;
+import io.galeb.hazelcast.IEventBus;
 
 @Path("/")
 public class ApiResources {

@@ -1,6 +1,6 @@
 package io.galeb.services.api;
 
-import com.openvraas.services.cdi.WeldContext;
+import io.galeb.services.cdi.WeldContext;
 
 public class Starter {
 

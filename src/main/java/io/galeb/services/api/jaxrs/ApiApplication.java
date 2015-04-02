@@ -8,8 +8,9 @@ import java.util.Set;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 
-import com.openvraas.core.model.Farm;
-import com.openvraas.hazelcast.IEventBus;
+import io.galeb.core.model.Farm;
+import io.galeb.hazelcast.IEventBus;
+import io.galeb.services.api.jaxrs.ApiResources;
 
 @ApplicationPath("/")
 public class ApiApplication extends Application {

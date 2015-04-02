@@ -1,6 +1,8 @@
 package io.galeb.services.api;
 
+import io.galeb.services.AbstractService;
 import io.galeb.services.api.jaxrs.ApiApplication;
+import io.galeb.undertow.jaxrs.Deployer;
 
 import java.util.HashMap;
 import java.util.Map;
