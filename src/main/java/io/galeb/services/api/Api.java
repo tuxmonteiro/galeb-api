@@ -1,17 +1,15 @@
-package com.openvraas.services.api;
+package io.galeb.services.api;
+
+import io.galeb.services.api.jaxrs.ApiApplication;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import com.openvraas.services.AbstractService;
-import com.openvraas.services.api.jaxrs.ApiApplication;
-import com.openvraas.undertow.jaxrs.Deployer;
-
 public class Api extends AbstractService {
 
-    private static final String PROP_MANAGER_PREFIX    = "com.openvraas.manager.";
+    private static final String PROP_MANAGER_PREFIX    = "io.galeb.manager.";
 
     private static final String PROP_MANAGER_PORT      = PROP_MANAGER_PREFIX+"port";
 

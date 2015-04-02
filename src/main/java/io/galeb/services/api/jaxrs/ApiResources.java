@@ -1,4 +1,4 @@
-package com.openvraas.services.api.jaxrs;
+package io.galeb.services.api.jaxrs;
 
 import java.io.BufferedReader;
 import java.io.IOException;

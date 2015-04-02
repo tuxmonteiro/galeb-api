@@ -1,4 +1,4 @@
-package com.openvraas.services.api;
+package io.galeb.services.api;
 
 import com.openvraas.services.cdi.WeldContext;
 

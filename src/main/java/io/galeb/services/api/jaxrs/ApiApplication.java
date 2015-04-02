@@ -1,4 +1,6 @@
-package com.openvraas.services.api.jaxrs;
+package io.galeb.services.api.jaxrs;
+
+import io.galeb.services.api.Api;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -8,7 +10,6 @@ import javax.ws.rs.core.Application;
 
 import com.openvraas.core.model.Farm;
 import com.openvraas.hazelcast.IEventBus;
-import com.openvraas.services.api.Api;
 
 @ApplicationPath("/")
 public class ApiApplication extends Application {
