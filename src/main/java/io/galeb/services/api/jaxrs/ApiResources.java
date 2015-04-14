@@ -1,5 +1,12 @@
 package io.galeb.services.api.jaxrs;
 
+import io.galeb.core.controller.EntityController;
+import io.galeb.core.controller.EntityController.Action;
+import io.galeb.core.json.JsonObject;
+import io.galeb.core.model.Entity;
+import io.galeb.core.model.Farm;
+import io.galeb.hazelcast.IEventBus;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,16 +30,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
-import io.galeb.core.controller.EntityController;
-import io.galeb.core.controller.EntityController.Action;
-import io.galeb.core.json.JsonObject;
 import io.galeb.core.logging.Logger;
-import io.galeb.core.model.Entity;
-import io.galeb.core.model.Farm;
-import io.galeb.hazelcast.IEventBus;
+import javax.ws.rs.core.UriInfo;
 
 @Path("/")
 public class ApiResources {
@@ -55,7 +56,7 @@ public class ApiResources {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response getNull() {
-       return Response.status(Status.FORBIDDEN).build(); //$NON-NLS-1$
+       return Response.status(Status.FORBIDDEN).build();
     }
 
     @GET
@@ -69,12 +70,12 @@ public class ApiResources {
             return Response.ok(JsonObject.toJson(farm)).build();
         }
 
-        EntityController entityController = farm.getEntityMap().get(entityType);
+        final EntityController entityController = farm.getEntityMap().get(entityType);
 
         if (entityController!=null) {
             return Response.ok(entityController.get(null)).build();
         }
-       return Response.status(Status.NOT_FOUND).build(); //$NON-NLS-1$
+       return Response.status(Status.NOT_FOUND).build();
     }
 
     @GET
@@ -82,7 +83,7 @@ public class ApiResources {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getOne() {
 
-        String result = getEntity(entityType, entityId);
+        final String result = getEntity(entityType, entityId);
         entityExist = isEntityExist(entityType, entityId);
 
         if (entityExist) {
@@ -102,27 +103,24 @@ public class ApiResources {
     @Path("{ENTITY_TYPE}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
-    @SuppressWarnings("finally")
     public Response post(InputStream is) {
         String entityStr = "";
         String entityIdFromEntity = "";
-
         try {
             entityStr = convertStreamToString(is);
 
-            Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
+            final Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
             entityIdFromEntity = entity.getId();
+            entityExist = isEntityExist(entityType, entityIdFromEntity);
 
             final IEventBus eventBus = ((ApiApplication) application).getEventBus();
-
             eventBus.publishEntity(entity, entityType, Action.ADD);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             logger.error(e);
-        } finally {
-            entityExist = isEntityExist(entityType, entityIdFromEntity);
-            return postAndGetResponse(!entityExist);
+            return postAndGetResponse(false);
         }
+        return postAndGetResponse(!entityExist);
     }
 
     @PUT
@@ -135,26 +133,24 @@ public class ApiResources {
     @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
-    @SuppressWarnings("finally")
     public Response put(InputStream is) {
         String entityStr = "";
         String entityIdFromEntity = "";
         try {
             entityStr = convertStreamToString(is);
 
-            Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
+            final Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
             entityIdFromEntity = entity.getId();
+            entityExist = isEntityExist(entityType, entityIdFromEntity);
 
             final IEventBus eventBus = ((ApiApplication) application).getEventBus();
-
             eventBus.publishEntity(entity, entityType, Action.CHANGE);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             logger.error(e);
-        } finally {
-            entityExist = isEntityExist(entityType, entityIdFromEntity);
-            return putAndGetResponse(entityExist);
+            return putAndGetResponse(false);
         }
+        return putAndGetResponse(entityExist);
     }
 
     @DELETE
@@ -167,27 +163,23 @@ public class ApiResources {
     @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
-    @SuppressWarnings("finally")
     public Response delete(InputStream is) {
-
         String entityStr = "";
         String entityIdFromEntity = "";
         try {
             entityStr = convertStreamToString(is);
-            Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
+            final Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
             entityIdFromEntity  = entity.getId();
+            entityExist = isEntityExist(entityType, entityIdFromEntity);
 
             final IEventBus eventBus = ((ApiApplication) application).getEventBus();
-
             eventBus.publishEntity(entity, entityType, Action.DEL);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             logger.error(e);
-        } finally {
-            entityExist = isEntityExist(entityType, entityIdFromEntity);
-            return deleteAndGetResponse(entityExist);
+            return deleteAndGetResponse(false);
         }
-
+        return deleteAndGetResponse(entityExist);
     }
 
     private String getEntity(String entityType, String id) {
@@ -195,7 +187,7 @@ public class ApiResources {
         final Farm farm = ((ApiApplication) application).getFarm();
         String result = "";
 
-        EntityController entityController = farm.getEntityMap().get(entityType);
+        final EntityController entityController = farm.getEntityMap().get(entityType);
 
         if (entityController!=null) {
             result = entityController.get(id);
@@ -204,7 +196,7 @@ public class ApiResources {
     }
 
     private boolean isEntityExist(String entityType, String id) {
-        String result = getEntity(entityType, id);
+        final String result = getEntity(entityType, id);
         return result != null && !JsonObject.NULL.equals(result);
     }
 
@@ -229,11 +221,11 @@ public class ApiResources {
     private String convertStreamToString(InputStream is) throws IOException {
 
         if (is != null) {
-            Writer writer = new StringWriter();
+            final Writer writer = new StringWriter();
 
-            char[] buffer = new char[1024];
+            final char[] buffer = new char[1024];
             try {
-                Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8")); //$NON-NLS-1$
+                final Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8")); //$NON-NLS-1$
                 int n;
                 while ((n = reader.read(buffer)) != -1) {
                     writer.write(buffer, 0, n);
