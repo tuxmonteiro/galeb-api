@@ -3,6 +3,7 @@ package io.galeb.services.api.jaxrs;
 import io.galeb.core.controller.EntityController;
 import io.galeb.core.controller.EntityController.Action;
 import io.galeb.core.json.JsonObject;
+import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
 import io.galeb.hazelcast.IEventBus;
@@ -31,8 +32,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
-import io.galeb.core.logging.Logger;
 import javax.ws.rs.core.UriInfo;
 
 @Path("/")
@@ -66,7 +65,7 @@ public class ApiResources {
 
         final Farm farm = ((ApiApplication) application).getFarm();
 
-        if (Farm.class.getSimpleName().toLowerCase().equals(entityType)) {
+        if (Farm.class.getSimpleName().equalsIgnoreCase(entityType)) {
             return Response.ok(JsonObject.toJson(farm)).build();
         }
 
