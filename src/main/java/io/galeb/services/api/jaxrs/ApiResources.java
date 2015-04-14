@@ -8,6 +8,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -28,12 +29,16 @@ import javax.ws.rs.core.Response.Status;
 import io.galeb.core.controller.EntityController;
 import io.galeb.core.controller.EntityController.Action;
 import io.galeb.core.json.JsonObject;
+import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
 import io.galeb.hazelcast.IEventBus;
 
 @Path("/")
 public class ApiResources {
+
+    @Inject
+    protected Logger logger;
 
     @Context UriInfo uriInfo;
 
@@ -113,7 +118,7 @@ public class ApiResources {
             eventBus.publishEntity(entity, entityType, Action.ADD);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
         } finally {
             entityExist = isEntityExist(entityType, entityIdFromEntity);
             return postAndGetResponse(!entityExist);
@@ -145,7 +150,7 @@ public class ApiResources {
             eventBus.publishEntity(entity, entityType, Action.CHANGE);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
         } finally {
             entityExist = isEntityExist(entityType, entityIdFromEntity);
             return putAndGetResponse(entityExist);
@@ -177,7 +182,7 @@ public class ApiResources {
             eventBus.publishEntity(entity, entityType, Action.DEL);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
         } finally {
             entityExist = isEntityExist(entityType, entityIdFromEntity);
             return deleteAndGetResponse(entityExist);

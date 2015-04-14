@@ -43,7 +43,7 @@ public class Api extends AbstractService {
                       .setOptions(options)
                       .start();
 
-        onLog("DEBUG", "[0.0.0.0:"+String.valueOf(port)+"] ready");
+        logger.debug(String.format("[0.0.0.0:%d] ready", port));
     }
 
     public Api() {
