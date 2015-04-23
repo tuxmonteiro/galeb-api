@@ -40,6 +40,9 @@ public class ApiResources {
     @Inject
     protected Logger logger;
 
+    @Inject
+    protected IEventBus eventBus;
+
     @Context UriInfo uriInfo;
 
     @Context Request request;
@@ -66,7 +69,7 @@ public class ApiResources {
         final Farm farm = ((ApiApplication) application).getFarm();
 
         if (Farm.class.getSimpleName().equalsIgnoreCase(entityType)) {
-            return Response.ok(JsonObject.toJson(farm)).build();
+            return Response.ok(JsonObject.toJsonString(farm)).build();
         }
 
         final EntityController entityController = farm.getEntityMap().get(entityType);
@@ -112,7 +115,6 @@ public class ApiResources {
             entityIdFromEntity = entity.getId();
             entityExist = isEntityExist(entityType, entityIdFromEntity);
 
-            final IEventBus eventBus = ((ApiApplication) application).getEventBus();
             eventBus.publishEntity(entity, entityType, Action.ADD);
 
         } catch (final IOException e) {
@@ -142,7 +144,6 @@ public class ApiResources {
             entityIdFromEntity = entity.getId();
             entityExist = isEntityExist(entityType, entityIdFromEntity);
 
-            final IEventBus eventBus = ((ApiApplication) application).getEventBus();
             eventBus.publishEntity(entity, entityType, Action.CHANGE);
 
         } catch (final IOException e) {
@@ -171,7 +172,6 @@ public class ApiResources {
             entityIdFromEntity  = entity.getId();
             entityExist = isEntityExist(entityType, entityIdFromEntity);
 
-            final IEventBus eventBus = ((ApiApplication) application).getEventBus();
             eventBus.publishEntity(entity, entityType, Action.DEL);
 
         } catch (final IOException e) {
