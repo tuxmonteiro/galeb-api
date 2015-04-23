@@ -2,11 +2,11 @@ package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.controller.EntityController;
 import io.galeb.core.controller.EntityController.Action;
+import io.galeb.core.eventbus.IEventBus;
 import io.galeb.core.json.JsonObject;
 import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
-import io.galeb.hazelcast.IEventBus;
 
 import java.io.BufferedReader;
 import java.io.IOException;

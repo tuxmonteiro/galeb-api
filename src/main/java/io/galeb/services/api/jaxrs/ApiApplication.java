@@ -8,8 +8,8 @@ import java.util.Set;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 
+import io.galeb.core.eventbus.IEventBus;
 import io.galeb.core.model.Farm;
-import io.galeb.hazelcast.IEventBus;
 import io.galeb.services.api.jaxrs.ApiResources;
 
 @ApplicationPath("/")
