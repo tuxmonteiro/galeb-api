@@ -2,7 +2,6 @@ package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.controller.EntityController;
 import io.galeb.core.controller.EntityController.Action;
-import io.galeb.core.eventbus.IEventBus;
 import io.galeb.core.json.JsonObject;
 import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Entity;
@@ -39,9 +38,6 @@ public class ApiResources {
 
     @Inject
     protected Logger logger;
-
-    @Inject
-    protected IEventBus eventBus;
 
     @Context UriInfo uriInfo;
 
@@ -115,7 +111,7 @@ public class ApiResources {
             entityIdFromEntity = entity.getId();
             entityExist = isEntityExist(entityType, entityIdFromEntity);
 
-            eventBus.publishEntity(entity, entityType, Action.ADD);
+            ((ApiApplication) application).getEventBus().publishEntity(entity, entityType, Action.ADD);
 
         } catch (final IOException e) {
             logger.error(e);
@@ -144,7 +140,7 @@ public class ApiResources {
             entityIdFromEntity = entity.getId();
             entityExist = isEntityExist(entityType, entityIdFromEntity);
 
-            eventBus.publishEntity(entity, entityType, Action.CHANGE);
+            ((ApiApplication) application).getEventBus().publishEntity(entity, entityType, Action.CHANGE);
 
         } catch (final IOException e) {
             logger.error(e);
@@ -172,7 +168,7 @@ public class ApiResources {
             entityIdFromEntity  = entity.getId();
             entityExist = isEntityExist(entityType, entityIdFromEntity);
 
-            eventBus.publishEntity(entity, entityType, Action.DEL);
+            ((ApiApplication) application).getEventBus().publishEntity(entity, entityType, Action.DEL);
 
         } catch (final IOException e) {
             logger.error(e);

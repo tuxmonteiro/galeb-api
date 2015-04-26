@@ -1,5 +1,7 @@
 package io.galeb.services.api.jaxrs;
 
+import io.galeb.core.eventbus.IEventBus;
+import io.galeb.core.model.Farm;
 import io.galeb.services.api.Api;
 
 import java.util.HashSet;
@@ -8,16 +10,16 @@ import java.util.Set;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 
-import io.galeb.core.model.Farm;
-import io.galeb.services.api.jaxrs.ApiResources;
-
 @ApplicationPath("/")
 public class ApiApplication extends Application {
 
     private Farm farm;
 
+    private IEventBus eventBus;
+
     public Application setManager(final Api api) {
-        this.farm = api.getFarm();
+        farm = api.getFarm();
+        eventBus = api.getEventBus();
         return this;
     }
 
@@ -30,5 +32,9 @@ public class ApiApplication extends Application {
         final Set<Class<?>> classes = new HashSet<>();
         classes.add(ApiResources.class);
         return classes;
+    }
+
+    public IEventBus getEventBus() {
+        return eventBus;
     }
 }

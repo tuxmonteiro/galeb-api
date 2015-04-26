@@ -28,6 +28,10 @@ public class Api extends AbstractService {
         }
     }
 
+    public Api() {
+        super();
+    }
+
     @PostConstruct
     protected void init() {
 
@@ -46,10 +50,6 @@ public class Api extends AbstractService {
                       .start();
 
         logger.debug(String.format("[0.0.0.0:%d] ready", port));
-    }
-
-    public Api() {
-        super();
     }
 
 }
