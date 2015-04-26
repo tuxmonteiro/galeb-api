@@ -160,7 +160,8 @@
             <argument>-Xms1024m</argument>
             <argument>-Xmx1024m</argument>
             <argument>-Dlog4j.configurationFile=log4j.xml</argument>
-            <argument>-Dio.galeb.manager.port=9090</argument>
+            <argument>-Dhazelcast.config=hazelcast.xml</argument>
+            <argument>-Dio.galeb.api.port=9090</argument>
             <argument>-jar</argument>
             <argument>target/galeb-${project.version}-uber.jar</argument>
           </arguments>
