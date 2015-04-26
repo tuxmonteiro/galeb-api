@@ -17,9 +17,11 @@ public class Api extends AbstractService {
 
     private static final String PROP_MANAGER_IOTHREADS = PROP_MANAGER_PREFIX+"iothread";
 
+    public static final int     DEFAULT_PORT           = 9090;
+
     static {
         if (System.getProperty(PROP_MANAGER_PORT)==null) {
-            System.setProperty(PROP_MANAGER_PORT, "9090");
+            System.setProperty(PROP_MANAGER_PORT, Integer.toString(DEFAULT_PORT));
         }
         if (System.getProperty(PROP_MANAGER_IOTHREADS)==null) {
             System.setProperty(PROP_MANAGER_IOTHREADS, String.valueOf(Runtime.getRuntime().availableProcessors()));
