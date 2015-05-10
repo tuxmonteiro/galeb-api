@@ -13,7 +13,7 @@ import javax.annotation.PostConstruct;
 
 public class Api extends AbstractService {
 
-    private static final String PROP_MANAGER_PREFIX    = "io.galeb.api.";
+    private static final String PROP_MANAGER_PREFIX    = Api.class.getPackage().getName()+".";
 
     private static final String PROP_MANAGER_PORT      = PROP_MANAGER_PREFIX+"port";
 
