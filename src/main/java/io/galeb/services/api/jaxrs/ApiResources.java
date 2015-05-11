@@ -20,8 +20,10 @@ import io.galeb.core.controller.EntityController;
 import io.galeb.core.controller.EntityController.Action;
 import io.galeb.core.json.JsonObject;
 import io.galeb.core.logging.Logger;
+import io.galeb.core.model.BackendPool;
 import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
+import io.galeb.core.model.VirtualHost;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,6 +32,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -169,6 +173,30 @@ public class ApiResources {
     @Produces(MediaType.TEXT_PLAIN)
     public Response deleteNull() {
        return Response.status(Status.FORBIDDEN).build();
+    }
+
+    @DELETE
+    @Path("{ENTITY_TYPE}")
+    @Consumes(MediaType.WILDCARD)
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response deleteAll(@PathParam("ENTITY_TYPE") String entityType) {
+
+        final Entity FakeEntity = new Entity();
+
+        if (Farm.class.getSimpleName().equalsIgnoreCase(entityType)) {
+            final List<String> entityTypes = new ArrayList<>();
+            entityTypes.add(VirtualHost.class.getSimpleName().toLowerCase());
+            entityTypes.add(BackendPool.class.getSimpleName().toLowerCase());
+            for (String fakeEntityType: entityTypes) {
+                ((ApiApplication) application).getEventBus()
+                    .publishEntity(FakeEntity, fakeEntityType, Action.DEL_ALL);
+            }
+            return deleteAndGetResponse(true);
+        }
+
+        ((ApiApplication) application).getEventBus()
+            .publishEntity(FakeEntity, entityType, Action.DEL_ALL);
+        return deleteAndGetResponse(true);
     }
 
     @DELETE
