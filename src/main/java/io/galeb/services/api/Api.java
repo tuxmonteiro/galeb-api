@@ -16,8 +16,6 @@
 
 package io.galeb.services.api;
 
-import io.galeb.core.controller.EntityController.Action;
-import io.galeb.core.json.JsonObject;
 import io.galeb.core.services.AbstractService;
 import io.galeb.services.api.jaxrs.ApiApplication;
 import io.galeb.undertow.jaxrs.Deployer;
@@ -68,11 +66,6 @@ public class Api extends AbstractService {
                       .start();
 
         logger.debug(String.format("[0.0.0.0:%d] ready", port));
-    }
-
-    @Override
-    public void handleController(JsonObject json, Action action) {
-        // future
     }
 
 }
