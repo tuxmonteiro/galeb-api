@@ -132,7 +132,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <outputFile>target/galeb-${project.version}-uber.jar</outputFile>
+              <outputFile>target/galeb-api-${project.version}-uber.jar</outputFile>
             </configuration>
           </execution>
         </executions>
@@ -163,7 +163,7 @@
             <argument>-Dhazelcast.config=hazelcast.xml</argument>
             <argument>-Dio.galeb.services.api.port=9090</argument>
             <argument>-jar</argument>
-            <argument>target/galeb-${project.version}-uber.jar</argument>
+            <argument>target/galeb-api-${project.version}-uber.jar</argument>
           </arguments>
         </configuration>
       </plugin>
