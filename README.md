@@ -1,6 +1,6 @@
-Galeb - Open Virtual Router as a Service
+Galeb - API Service
 ========================================
-<h1>Galeb - API Service</h1>
+[![Build Status](https://travis-ci.org/galeb/galeb3-api.svg)](https://travis-ci.org/galeb/galeb3-api)
 
 Galeb is a dynamic software router built on JBOSS Undertow and XNIO.<br/>
 It's a massively parallel routing system running a shared-nothing architecture.
