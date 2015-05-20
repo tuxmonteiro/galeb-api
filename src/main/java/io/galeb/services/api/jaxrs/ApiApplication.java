@@ -17,6 +17,7 @@
 package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.eventbus.IEventBus;
+import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Farm;
 import io.galeb.services.api.Api;
 
@@ -33,9 +34,12 @@ public class ApiApplication extends Application {
 
     private IEventBus eventBus;
 
+    private Logger logger;
+
     public Application setManager(final Api api) {
         farm = api.getFarm();
         eventBus = api.getEventBus();
+        logger = api.getLogger();
         return this;
     }
 
@@ -52,5 +56,9 @@ public class ApiApplication extends Application {
 
     public IEventBus getEventBus() {
         return eventBus;
+    }
+
+    public Logger getLogger() {
+        return logger;
     }
 }

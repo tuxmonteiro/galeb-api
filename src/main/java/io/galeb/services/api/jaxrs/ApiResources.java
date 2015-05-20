@@ -20,9 +20,11 @@ import io.galeb.core.controller.EntityController;
 import io.galeb.core.controller.EntityController.Action;
 import io.galeb.core.json.JsonObject;
 import io.galeb.core.logging.Logger;
+import io.galeb.core.model.Backend;
 import io.galeb.core.model.BackendPool;
 import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
+import io.galeb.core.model.Rule;
 import io.galeb.core.model.VirtualHost;
 
 import java.io.BufferedReader;
@@ -32,10 +34,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
-import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -56,7 +58,6 @@ import javax.ws.rs.core.UriInfo;
 @Path("/")
 public class ApiResources {
 
-    @Inject
     protected Logger logger;
 
     @Context UriInfo uriInfo;
@@ -71,6 +72,16 @@ public class ApiResources {
 
     private boolean entityExist = false;
 
+    private final Map<String, Class<? extends Entity>> mapEntityClass = new ConcurrentHashMap<>();
+
+    public ApiResources() {
+        mapEntityClass.put(Backend.class.getSimpleName().toLowerCase(), Backend.class);
+        mapEntityClass.put(BackendPool.class.getSimpleName().toLowerCase(), BackendPool.class);
+        mapEntityClass.put(Rule.class.getSimpleName().toLowerCase(), Rule.class);
+        mapEntityClass.put(VirtualHost.class.getSimpleName().toLowerCase(), VirtualHost.class);
+        mapEntityClass.put(Farm.class.getSimpleName().toLowerCase(), Farm.class);
+    }
+
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response getNull() {
@@ -83,11 +94,6 @@ public class ApiResources {
     public Response get(@PathParam("ENTITY_TYPE") String entityType) {
 
         final Farm farm = ((ApiApplication) application).getFarm();
-
-        if (Farm.class.getSimpleName().equalsIgnoreCase(entityType)) {
-            return Response.ok(JsonObject.toJsonString(farm)).build();
-        }
-
         final EntityController entityController = farm.getEntityMap().get(entityType);
 
         if (entityController!=null) {
@@ -123,21 +129,25 @@ public class ApiResources {
     @Produces(MediaType.TEXT_PLAIN)
     public Response post(InputStream is) {
         String entityStr = "";
-        String entityIdFromEntity = "";
+        final Class<?> clazz = getClass(entityType);
+
         try {
+            Objects.requireNonNull(clazz);
+
             entityStr = convertStreamToString(is);
+            final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
+            ((ApiApplication) application).getEventBus()
+                .publishEntity(entity, entityType, Action.ADD);
 
-            final Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
-            entityIdFromEntity = entity.getId();
-            entityExist = isEntityExist(entityType, entityIdFromEntity);
-
-            ((ApiApplication) application).getEventBus().publishEntity(entity, entityType, Action.ADD);
-
-        } catch (final IOException e) {
-            logger.error(e);
-            return postAndGetResponse(false);
+        } catch (final IOException|RuntimeException e) {
+            ((ApiApplication) application).getLogger().error(e);
+            return Response.status(Status.BAD_REQUEST).build();
         }
-        return postAndGetResponse(!entityExist);
+        return Response.accepted().build();
+    }
+
+    private Class<?> getClass(String entityType) {
+        return mapEntityClass.get(entityType);
     }
 
     @PUT
@@ -152,21 +162,21 @@ public class ApiResources {
     @Produces(MediaType.TEXT_PLAIN)
     public Response put(InputStream is) {
         String entityStr = "";
-        String entityIdFromEntity = "";
+        final Class<?> clazz = getClass(entityType);
+
         try {
+            Objects.requireNonNull(clazz);
+
             entityStr = convertStreamToString(is);
+            final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
+            ((ApiApplication) application).getEventBus()
+                .publishEntity(entity, entityType, Action.CHANGE);
 
-            final Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
-            entityIdFromEntity = entity.getId();
-            entityExist = isEntityExist(entityType, entityIdFromEntity);
-
-            ((ApiApplication) application).getEventBus().publishEntity(entity, entityType, Action.CHANGE);
-
-        } catch (final IOException e) {
-            logger.error(e);
-            return putAndGetResponse(false);
+        } catch (final IOException|RuntimeException e) {
+            ((ApiApplication) application).getLogger().error(e);
+            return Response.status(Status.BAD_REQUEST).build();
         }
-        return putAndGetResponse(entityExist);
+        return Response.accepted().build();
     }
 
     @DELETE
@@ -180,23 +190,14 @@ public class ApiResources {
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
     public Response deleteAll(@PathParam("ENTITY_TYPE") String entityType) {
-
-        final Entity FakeEntity = new Entity();
-
-        if (Farm.class.getSimpleName().equalsIgnoreCase(entityType)) {
-            final List<String> entityTypes = new ArrayList<>();
-            entityTypes.add(VirtualHost.class.getSimpleName().toLowerCase());
-            entityTypes.add(BackendPool.class.getSimpleName().toLowerCase());
-            for (String fakeEntityType: entityTypes) {
-                ((ApiApplication) application).getEventBus()
-                    .publishEntity(FakeEntity, fakeEntityType, Action.DEL_ALL);
-            }
-            return deleteAndGetResponse(true);
+        try {
+            ((ApiApplication) application).getEventBus()
+                .publishEntity(new Entity(), entityType, Action.DEL_ALL);
+        } catch (final Exception e) {
+            ((ApiApplication) application).getLogger().error(e);
+            return Response.status(Status.BAD_REQUEST).build();
         }
-
-        ((ApiApplication) application).getEventBus()
-            .publishEntity(FakeEntity, entityType, Action.DEL_ALL);
-        return deleteAndGetResponse(true);
+        return Response.accepted().build();
     }
 
     @DELETE
@@ -205,20 +206,16 @@ public class ApiResources {
     @Produces(MediaType.TEXT_PLAIN)
     public Response delete(InputStream is) {
         String entityStr = "";
-        String entityIdFromEntity = "";
         try {
             entityStr = convertStreamToString(is);
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
-            entityIdFromEntity  = entity.getId();
-            entityExist = isEntityExist(entityType, entityIdFromEntity);
-
             ((ApiApplication) application).getEventBus().publishEntity(entity, entityType, Action.DEL);
 
         } catch (final IOException e) {
-            logger.error(e);
-            return deleteAndGetResponse(false);
+            ((ApiApplication) application).getLogger().error(e);
+            return Response.status(Status.BAD_REQUEST).build();
         }
-        return deleteAndGetResponse(entityExist);
+        return Response.accepted().build();
     }
 
     private String getEntity(String entityType, String id) {
@@ -237,24 +234,6 @@ public class ApiResources {
     private boolean isEntityExist(String entityType, String id) {
         final String result = getEntity(entityType, id);
         return result != null && !JsonObject.NULL.equals(result);
-    }
-
-    private Response deleteAndGetResponse(boolean entityExist) {
-        return postAndGetResponse(entityExist);
-    }
-
-    private Response putAndGetResponse(boolean entityExist) {
-        return postAndGetResponse(entityExist);
-    }
-
-    private Response postAndGetResponse(boolean entityExist) {
-        Response res = null;
-        if (entityExist) {
-            res = Response.accepted().build();
-        } else {
-            res = Response.noContent().build();
-        }
-        return res;
     }
 
     private String convertStreamToString(InputStream is) throws IOException {
