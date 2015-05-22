@@ -35,7 +35,6 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.ws.rs.Consumes;
@@ -132,10 +131,19 @@ public class ApiResources {
         final Class<?> clazz = getClass(entityType);
 
         try {
-            Objects.requireNonNull(clazz);
+            if (clazz==null) {
+                logger.error(entityType+" NOT FOUND");
+                return Response.status(Status.BAD_REQUEST).build();
+            }
 
             entityStr = convertStreamToString(is);
+            if (entityStr.isEmpty()) {
+                logger.error("Json Body NOT FOUND");
+                return Response.status(Status.BAD_REQUEST).build();
+            }
+
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
+
             ((ApiApplication) application).getEventBus()
                 .publishEntity(entity, entityType, Action.ADD);
 
@@ -165,9 +173,17 @@ public class ApiResources {
         final Class<?> clazz = getClass(entityType);
 
         try {
-            Objects.requireNonNull(clazz);
+            if (clazz==null) {
+                logger.error(entityType+" NOT FOUND");
+                return Response.status(Status.BAD_REQUEST).build();
+            }
 
             entityStr = convertStreamToString(is);
+            if (entityStr.isEmpty()) {
+                logger.error("Json Body NOT FOUND");
+                return Response.status(Status.BAD_REQUEST).build();
+            }
+
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             ((ApiApplication) application).getEventBus()
                 .publishEntity(entity, entityType, Action.CHANGE);
@@ -206,8 +222,20 @@ public class ApiResources {
     @Produces(MediaType.TEXT_PLAIN)
     public Response delete(InputStream is) {
         String entityStr = "";
+        final Class<?> clazz = getClass(entityType);
+
         try {
+            if (clazz==null) {
+                logger.error(entityType+" NOT FOUND");
+                return Response.status(Status.BAD_REQUEST).build();
+            }
+
             entityStr = convertStreamToString(is);
+            if (entityStr.isEmpty()) {
+                logger.error("Json Body NOT FOUND");
+                return Response.status(Status.BAD_REQUEST).build();
+            }
+
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
             ((ApiApplication) application).getEventBus().publishEntity(entity, entityType, Action.DEL);
 
