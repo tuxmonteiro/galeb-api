@@ -135,6 +135,10 @@ public class ApiResources {
                 logger.error(entityType+" NOT FOUND");
                 return Response.status(Status.BAD_REQUEST).build();
             }
+            if (entityType.equals(Farm.class.getSimpleName().toLowerCase())) {
+                logger.error("POST /"+entityType+" not supported");
+                return Response.status(Status.BAD_REQUEST).build();
+            }
 
             entityStr = convertStreamToString(is);
             if (entityStr.isEmpty()) {
