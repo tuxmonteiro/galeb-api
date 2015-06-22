@@ -17,7 +17,6 @@
 package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.controller.EntityController;
-import io.galeb.core.controller.EntityController.Action;
 import io.galeb.core.json.JsonObject;
 import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Backend;
@@ -34,8 +33,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -56,8 +58,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Path("/")
 public class ApiResources {
-
-    protected Logger logger;
 
     @Context UriInfo uriInfo;
 
@@ -129,6 +129,8 @@ public class ApiResources {
     public Response post(InputStream is) {
         String entityStr = "";
         final Class<?> clazz = getClass(entityType);
+        final ApiApplication api = ((ApiApplication)application);
+        final Logger logger = api.getLogger();
 
         try {
             if (clazz==null) {
@@ -148,17 +150,16 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
 
-            ((ApiApplication) application).getEventBus()
-                .publishEntity(entity, entityType, Action.ADD);
+            api.getDistributedMap().getMap(clazz.getName()).putIfAbsent(entity.getId(), entity);
 
         } catch (final IOException|RuntimeException e) {
-            ((ApiApplication) application).getLogger().error(e);
+            logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
         }
         return Response.accepted().build();
     }
 
-    private Class<?> getClass(String entityType) {
+    private Class<? extends Entity> getClass(String entityType) {
         return mapEntityClass.get(entityType);
     }
 
@@ -175,6 +176,8 @@ public class ApiResources {
     public Response put(InputStream is) {
         String entityStr = "";
         final Class<?> clazz = getClass(entityType);
+        final ApiApplication api = ((ApiApplication)application);
+        final Logger logger = api.getLogger();
 
         try {
             if (clazz==null) {
@@ -189,11 +192,11 @@ public class ApiResources {
             }
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
-            ((ApiApplication) application).getEventBus()
-                .publishEntity(entity, entityType, Action.CHANGE);
+
+            api.getDistributedMap().getMap(clazz.getName()).replace(entity.getId(), entity);
 
         } catch (final IOException|RuntimeException e) {
-            ((ApiApplication) application).getLogger().error(e);
+            logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
         }
         return Response.accepted().build();
@@ -210,13 +213,28 @@ public class ApiResources {
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
     public Response deleteAll(@PathParam("ENTITY_TYPE") String entityType) {
-        try {
-            ((ApiApplication) application).getEventBus()
-                .publishEntity(new Entity(), entityType, Action.DEL_ALL);
-        } catch (final Exception e) {
-            ((ApiApplication) application).getLogger().error(e);
+        final Class<? extends Entity> clazz = getClass(entityType);
+        final ApiApplication api = (ApiApplication)application;
+        final Logger logger = api.getLogger();
+        final Farm farm = api.getFarm();
+
+        logger.debug("DELETE (ALL) invoked");
+
+        if (clazz==null) {
+            logger.error(entityType+" NOT FOUND");
             return Response.status(Status.BAD_REQUEST).build();
         }
+
+        final List<Class<? extends Entity>> arrayOfClasses = entityType.equals(Farm.class.getSimpleName().toLowerCase()) ?
+                Arrays.asList(Backend.class, BackendPool.class, Rule.class, VirtualHost.class) : Arrays.asList(clazz);
+
+        arrayOfClasses.stream().forEach(aclazz -> {
+            farm.getCollection(aclazz).stream().forEach(entity -> {
+                final ConcurrentMap<String, Entity> map = api.getDistributedMap().getMap(aclazz.getName());
+                map.remove(entity.getId());
+            });
+        });
+
         return Response.accepted().build();
     }
 
@@ -227,6 +245,10 @@ public class ApiResources {
     public Response delete(InputStream is) {
         String entityStr = "";
         final Class<?> clazz = getClass(entityType);
+        final ApiApplication api = ((ApiApplication)application);
+        final Logger logger = api.getLogger();
+
+        logger.debug("DELETE invoked");
 
         try {
             if (clazz==null) {
@@ -240,19 +262,21 @@ public class ApiResources {
                 return Response.status(Status.BAD_REQUEST).build();
             }
 
-            final Entity entity = (Entity) JsonObject.fromJson(entityStr, Entity.class);
-            ((ApiApplication) application).getEventBus().publishEntity(entity, entityType, Action.DEL);
+            final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
+            final ConcurrentMap<String, Entity> map = api.getDistributedMap().getMap(clazz.getName());
+            map.remove(entity.getId());
+            logger.debug("[DELETE]: entity "+entity.getId()+" removed");
 
         } catch (final IOException e) {
-            ((ApiApplication) application).getLogger().error(e);
+            logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
         }
         return Response.accepted().build();
     }
 
     private String getEntity(String entityType, String id) {
-
-        final Farm farm = ((ApiApplication) application).getFarm();
+        final ApiApplication api = ((ApiApplication)application);
+        final Farm farm = api.getFarm();
         String result = "";
 
         final EntityController entityController = farm.getEntityMap().get(entityType);
