@@ -17,7 +17,6 @@
 package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.cluster.DistributedMap;
-import io.galeb.core.eventbus.IEventBus;
 import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
@@ -34,15 +33,12 @@ public class ApiApplication extends Application {
 
     private Farm farm;
 
-    private IEventBus eventBus;
-
     private Logger logger;
 
     private DistributedMap<String, Entity> distributedMap;
 
     public Application setManager(final Api api) {
         farm = api.getFarm();
-        eventBus = api.getEventBus();
         logger = api.getLogger();
         distributedMap = api.getDistributedMap();
         return this;
@@ -57,10 +53,6 @@ public class ApiApplication extends Application {
         final Set<Class<?>> classes = new HashSet<>();
         classes.add(ApiResources.class);
         return classes;
-    }
-
-    public IEventBus getEventBus() {
-        return eventBus;
     }
 
     public Logger getLogger() {
