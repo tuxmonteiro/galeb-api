@@ -59,6 +59,15 @@ import javax.ws.rs.core.UriInfo;
 @Path("/")
 public class ApiResources {
 
+    enum Method {
+        GET,
+        POST,
+        PUT,
+        DELETE,
+        PATCH,
+        OPTION
+    }
+
     @Context UriInfo uriInfo;
 
     @Context Request request;
@@ -81,31 +90,37 @@ public class ApiResources {
         mapEntityClass.put(Farm.class.getSimpleName().toLowerCase(), Farm.class);
     }
 
+    private void logReceived(String uri, String body, Method method) {
+        Logger logger = ((ApiApplication) application).getLogger();
+        logger.info("[" + method.toString() + "] " + uri + ": " + body);
+    }
+
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response getNull() {
-       return Response.status(Status.FORBIDDEN).build();
+        logReceived("/", "", Method.GET);
+        return Response.status(Status.FORBIDDEN).build();
     }
 
     @GET
     @Path("{ENTITY_TYPE}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@PathParam("ENTITY_TYPE") String entityType) {
-
+        logReceived("/" + entityType, "", Method.GET);
         final Farm farm = ((ApiApplication) application).getFarm();
         final EntityController entityController = farm.getEntityMap().get(entityType);
 
         if (entityController!=null) {
             return Response.ok(entityController.get(null)).build();
         }
-       return Response.status(Status.NOT_FOUND).build();
+        return Response.status(Status.NOT_FOUND).build();
     }
 
     @GET
     @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getOne() {
-
+        logReceived("/" + entityType + "/" + entityId, "", Method.GET);
         final String result = getEntity(entityType, entityId);
         entityExist = isEntityExist(entityType, entityId);
 
@@ -113,13 +128,14 @@ public class ApiResources {
             return Response.ok(result).build();
         }
 
-       return Response.status(Status.NOT_FOUND).build();
+        return Response.status(Status.NOT_FOUND).build();
     }
 
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     public Response postNull() {
-       return Response.status(Status.FORBIDDEN).build();
+        logReceived("/", "", Method.POST);
+        return Response.status(Status.FORBIDDEN).build();
     }
 
     @POST
@@ -156,6 +172,7 @@ public class ApiResources {
             logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
         }
+        logReceived("/" + entityType, entityStr, Method.POST);
         return Response.accepted().build();
     }
 
@@ -166,7 +183,8 @@ public class ApiResources {
     @PUT
     @Produces(MediaType.TEXT_PLAIN)
     public Response putNull() {
-       return Response.status(Status.FORBIDDEN).build();
+        logReceived("/", "", Method.PUT);
+        return Response.status(Status.FORBIDDEN).build();
     }
 
     @PUT
@@ -199,13 +217,15 @@ public class ApiResources {
             logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
         }
+        logReceived("/" + entityType + "/" + entityId, entityStr, Method.PUT);
         return Response.accepted().build();
     }
 
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
     public Response deleteNull() {
-       return Response.status(Status.FORBIDDEN).build();
+        logReceived("/", "", Method.DELETE);
+        return Response.status(Status.FORBIDDEN).build();
     }
 
     @DELETE
@@ -213,12 +233,11 @@ public class ApiResources {
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
     public Response deleteAll(@PathParam("ENTITY_TYPE") String entityType) {
+        logReceived("/" + entityType, "", Method.DELETE);
         final Class<? extends Entity> clazz = getClass(entityType);
         final ApiApplication api = (ApiApplication)application;
         final Logger logger = api.getLogger();
         final Farm farm = api.getFarm();
-
-        logger.debug("DELETE (ALL) invoked");
 
         if (clazz==null) {
             logger.error(entityType+" NOT FOUND");
@@ -248,8 +267,6 @@ public class ApiResources {
         final ApiApplication api = ((ApiApplication)application);
         final Logger logger = api.getLogger();
 
-        logger.debug("DELETE invoked");
-
         try {
             if (clazz==null) {
                 logger.error(entityType+" NOT FOUND");
@@ -265,12 +282,12 @@ public class ApiResources {
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             final ConcurrentMap<String, Entity> map = api.getDistributedMap().getMap(clazz.getName());
             map.remove(entity.getId());
-            logger.debug("[DELETE]: entity "+entity.getId()+" removed");
 
         } catch (final IOException e) {
             logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
         }
+        logReceived("/" + entityType + "/" + entityId, entityStr, Method.DELETE);
         return Response.accepted().build();
     }
 
