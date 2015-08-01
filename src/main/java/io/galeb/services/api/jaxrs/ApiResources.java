@@ -166,7 +166,7 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
 
-            api.getDistributedMap().getMap(clazz.getName()).putIfAbsent(entity.getId(), entity);
+            api.getDistributedMap().getMap(clazz.getName()).putIfAbsent(entity.compoundId(), entity);
 
         } catch (final IOException|RuntimeException e) {
             logger.error(e);
@@ -211,7 +211,7 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
 
-            api.getDistributedMap().getMap(clazz.getName()).replace(entity.getId(), entity);
+            api.getDistributedMap().getMap(clazz.getName()).replace(entity.compoundId(), entity);
 
         } catch (final IOException|RuntimeException e) {
             logger.error(e);
@@ -250,7 +250,7 @@ public class ApiResources {
         arrayOfClasses.stream().forEach(aclazz -> {
             farm.getCollection(aclazz).stream().forEach(entity -> {
                 final ConcurrentMap<String, Entity> map = api.getDistributedMap().getMap(aclazz.getName());
-                map.remove(entity.getId());
+                map.remove(entity.compoundId());
             });
         });
 
@@ -281,7 +281,7 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             final ConcurrentMap<String, Entity> map = api.getDistributedMap().getMap(clazz.getName());
-            map.remove(entity.getId());
+            map.remove(entity.compoundId());
 
         } catch (final IOException e) {
             logger.error(e);
