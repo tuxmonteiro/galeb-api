@@ -306,7 +306,7 @@ public class ApiResources {
 
     private boolean isEntityExist(String entityType, String id) {
         final String result = getEntity(entityType, id);
-        return result != null && !JsonObject.NULL.equals(result);
+        return result != null && !JsonObject.NULL.equals(result) && !result.equals("[]");
     }
 
     private String convertStreamToString(InputStream is) throws IOException {
