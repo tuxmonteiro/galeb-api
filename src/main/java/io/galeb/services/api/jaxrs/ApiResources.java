@@ -165,8 +165,8 @@ public class ApiResources {
             }
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
-
-            api.getDistributedMap().getMap(clazz.getName()).putIfAbsent(entity.compoundId(), entity);
+            entity.setEntityType(clazz.getSimpleName().toLowerCase());
+            api.getDistributedMap().getMap(clazz.getName()).putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
 
         } catch (final IOException|RuntimeException e) {
             logger.error(e);
@@ -210,8 +210,8 @@ public class ApiResources {
             }
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
-
-            api.getDistributedMap().getMap(clazz.getName()).replace(entity.compoundId(), entity);
+            entity.setEntityType(clazz.getSimpleName().toLowerCase());
+            api.getDistributedMap().getMap(clazz.getName()).replace(entity.compoundId(), JsonObject.toJsonString(entity));
 
         } catch (final IOException|RuntimeException e) {
             logger.error(e);
@@ -249,7 +249,7 @@ public class ApiResources {
 
         arrayOfClasses.stream().forEach(aclazz -> {
             farm.getCollection(aclazz).stream().forEach(entity -> {
-                final ConcurrentMap<String, Entity> map = api.getDistributedMap().getMap(aclazz.getName());
+                final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(aclazz.getName());
                 map.remove(entity.compoundId());
             });
         });
@@ -280,7 +280,7 @@ public class ApiResources {
             }
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
-            final ConcurrentMap<String, Entity> map = api.getDistributedMap().getMap(clazz.getName());
+            final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
             map.remove(entity.compoundId());
 
         } catch (final IOException e) {

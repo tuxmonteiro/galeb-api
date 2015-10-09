@@ -35,7 +35,7 @@ public class ApiApplication extends Application {
 
     private Logger logger;
 
-    private DistributedMap<String, Entity> distributedMap;
+    private DistributedMap<String, String> distributedMap;
 
     public Application setManager(final Api api) {
         farm = api.getFarm();
@@ -59,7 +59,7 @@ public class ApiApplication extends Application {
         return logger;
     }
 
-    public DistributedMap<String, Entity> getDistributedMap() {
+    public DistributedMap<String, String> getDistributedMap() {
         return distributedMap;
     }
 }
