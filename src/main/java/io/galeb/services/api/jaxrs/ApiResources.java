@@ -25,6 +25,7 @@ import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
 import io.galeb.core.model.Rule;
 import io.galeb.core.model.VirtualHost;
+import io.galeb.services.api.queue.TaskQueuer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -55,6 +56,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+
+import static io.galeb.core.model.Farm.getClassNameFromEntityType;
 
 @Path("/")
 public class ApiResources {
@@ -108,7 +111,7 @@ public class ApiResources {
     public Response get(@PathParam("ENTITY_TYPE") String entityType) {
         logReceived("/" + entityType, "", Method.GET);
         final Farm farm = ((ApiApplication) application).getFarm();
-        final EntityController entityController = farm.getEntityMap().get(entityType);
+        final EntityController entityController = farm.getController(getClassNameFromEntityType(entityType));
 
         if (entityController!=null) {
             return Response.ok(entityController.get(null)).build();
@@ -166,11 +169,17 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             entity.setEntityType(clazz.getSimpleName().toLowerCase());
-            api.getDistributedMap().getMap(clazz.getName()).putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
-
-        } catch (final IOException|RuntimeException e) {
+            TaskQueuer.push(() -> {
+                ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+                map.putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
+                return 0;
+            });
+        } catch (IOException e) {
             logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
+        } catch (UnsupportedOperationException e) {
+            logger.error(e);
+            return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType, entityStr, Method.POST);
         return Response.accepted().build();
@@ -211,11 +220,17 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             entity.setEntityType(clazz.getSimpleName().toLowerCase());
-            api.getDistributedMap().getMap(clazz.getName()).replace(entity.compoundId(), JsonObject.toJsonString(entity));
-
-        } catch (final IOException|RuntimeException e) {
+            TaskQueuer.push(() -> {
+                ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+                map.replace(entity.compoundId(), JsonObject.toJsonString(entity));
+                return 0;
+            });
+        } catch (final IOException e) {
             logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
+        } catch (UnsupportedOperationException e) {
+            logger.error(e);
+            return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType + "/" + entityId, entityStr, Method.PUT);
         return Response.accepted().build();
@@ -247,12 +262,20 @@ public class ApiResources {
         final List<Class<? extends Entity>> arrayOfClasses = entityType.equals(Farm.class.getSimpleName().toLowerCase()) ?
                 Arrays.asList(Backend.class, BackendPool.class, Rule.class, VirtualHost.class) : Arrays.asList(clazz);
 
-        arrayOfClasses.stream().forEach(aclazz -> {
-            farm.getCollection(aclazz).stream().forEach(entity -> {
-                final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(aclazz.getName());
-                map.remove(entity.compoundId());
+        try {
+            TaskQueuer.push(() -> {
+                arrayOfClasses.stream().forEach(aclazz -> {
+                    farm.getCollection(aclazz).stream().forEach(entity -> {
+                        final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(aclazz.getName());
+                        map.remove(entity.compoundId());
+                    });
+                });
+                return 0;
             });
-        });
+        } catch (UnsupportedOperationException e) {
+            logger.error(e);
+            return Response.status(Status.SERVICE_UNAVAILABLE).build();
+        }
 
         return Response.accepted().build();
     }
@@ -280,12 +303,17 @@ public class ApiResources {
             }
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
-            final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
-            map.remove(entity.compoundId());
-
+            TaskQueuer.push(() -> {
+                final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+                map.remove(entity.compoundId());
+                return 0;
+            });
         } catch (final IOException e) {
             logger.error(e);
             return Response.status(Status.BAD_REQUEST).build();
+        } catch (UnsupportedOperationException e) {
+            logger.error(e);
+            return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType + "/" + entityId, entityStr, Method.DELETE);
         return Response.accepted().build();
@@ -296,7 +324,7 @@ public class ApiResources {
         final Farm farm = api.getFarm();
         String result = "";
 
-        final EntityController entityController = farm.getEntityMap().get(entityType);
+        final EntityController entityController = farm.getController(getClassNameFromEntityType(entityType));
 
         if (entityController!=null) {
             result = entityController.get(id);

@@ -18,7 +18,6 @@ package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.cluster.DistributedMap;
 import io.galeb.core.logging.Logger;
-import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
 import io.galeb.services.api.Api;
 
