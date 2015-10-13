@@ -62,7 +62,6 @@ public class TaskQueuer {
         } else {
             for (int pos = 0; pos < taskList.length(); pos++) {
                 if (taskList.get(pos) == null) {
-                    lastEmptySlot.set(pos);
                     newTask =  QUEUE.submit(callable);
                     taskList.set(pos, newTask);
                     break;
