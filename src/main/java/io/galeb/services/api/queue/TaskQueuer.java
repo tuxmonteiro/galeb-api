@@ -55,12 +55,11 @@ public class TaskQueuer {
             return status;
         }
 
-        Set<Integer> control = new HashSet<>();
-        control.add(randomPos);
-        for (int count = 0; count <= QUEUE_LIMIT; ++count) {
+        Set<Integer> randomHistory = new HashSet<>();
+        randomHistory.add(randomPos);
+        for (int tryLimit = 0; tryLimit < QUEUE_LIMIT * 2; ++tryLimit) {
             randomPos = randomGenerator.nextInt(QUEUE_LIMIT - 1);
-            if (!control.add(randomPos)) {
-                count--;
+            if (!randomHistory.add(randomPos)) {
                 continue;
             }
             status = submitTaskIfPossible(callable, randomPos);
