@@ -175,10 +175,10 @@ public class ApiResources {
                 return 0;
             });
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
         } catch (UnsupportedOperationException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType, entityStr, Method.POST);
@@ -226,10 +226,10 @@ public class ApiResources {
                 return 0;
             });
         } catch (final IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
         } catch (UnsupportedOperationException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType + "/" + entityId, entityStr, Method.PUT);
@@ -263,17 +263,17 @@ public class ApiResources {
                 Arrays.asList(Backend.class, BackendPool.class, Rule.class, VirtualHost.class) : Arrays.asList(clazz);
 
         try {
-            TaskQueuer.push(() -> {
-                arrayOfClasses.stream().forEach(aclazz -> {
-                    farm.getCollection(aclazz).stream().forEach(entity -> {
+            arrayOfClasses.stream().forEach(aclazz -> {
+                farm.getCollection(aclazz).stream().forEach(entity -> {
+                    TaskQueuer.push(() -> {
                         final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(aclazz.getName());
                         map.remove(entity.compoundId());
+                        return 0;
                     });
                 });
-                return 0;
             });
         } catch (UnsupportedOperationException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
 
@@ -309,10 +309,10 @@ public class ApiResources {
                 return 0;
             });
         } catch (final IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
         } catch (UnsupportedOperationException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType + "/" + entityId, entityStr, Method.DELETE);

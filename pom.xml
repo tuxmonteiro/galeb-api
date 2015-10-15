@@ -162,8 +162,8 @@
           <executable>java</executable>
           <arguments>
             <argument>-server</argument>
-            <argument>-Xms1024m</argument>
-            <argument>-Xmx1024m</argument>
+            <argument>-Xms2048m</argument>
+            <argument>-Xmx2048m</argument>
             <argument>-Dlog4j.configurationFile=log4j.xml</argument>
             <argument>-Dio.galeb.services.api.port=9090</argument>
             <argument>-Dio.galeb.services.api.queue.limit=1048576</argument>
