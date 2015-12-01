@@ -1,6 +1,6 @@
 Galeb - API Service
 ========================================
-[![Build Status](https://travis-ci.org/galeb/galeb3-api.svg)](https://travis-ci.org/galeb/galeb3-api)
+[![Circle CI](https://circleci.com/gh/galeb/galeb-api.svg?style=svg)](https://circleci.com/gh/galeb/galeb-api)
 
 Galeb is a dynamic software router built on JBOSS Undertow and XNIO.<br/>
 It's a massively parallel routing system running a shared-nothing architecture.
@@ -12,5 +12,4 @@ Its main features are:
 * Highly scalable
 * Masterless (SNA - Shared nothing architecture)
 * Sends metrics to external counters (eg statsd)
-* Webhooks support
 
