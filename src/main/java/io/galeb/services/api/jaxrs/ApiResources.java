@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import javax.cache.*;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -170,7 +171,7 @@ public class ApiResources {
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             entity.setEntityType(clazz.getSimpleName().toLowerCase());
             TaskQueuer.push(() -> {
-                ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+                Cache<String, String> map = api.getCache(clazz.getName());
                 map.putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
                 return 0;
             });
@@ -221,7 +222,7 @@ public class ApiResources {
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             entity.setEntityType(clazz.getSimpleName().toLowerCase());
             TaskQueuer.push(() -> {
-                ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+                Cache<String, String> map = api.getCache(clazz.getName());
                 map.replace(entity.compoundId(), JsonObject.toJsonString(entity));
                 return 0;
             });
@@ -266,7 +267,7 @@ public class ApiResources {
             arrayOfClasses.stream().forEach(aclazz -> {
                 farm.getCollection(aclazz).stream().forEach(entity -> {
                     TaskQueuer.push(() -> {
-                        final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(aclazz.getName());
+                        final Cache<String, String> map = api.getCache(aclazz.getName());
                         map.remove(entity.compoundId());
                         return 0;
                     });
@@ -304,7 +305,7 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             TaskQueuer.push(() -> {
-                final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+                final Cache<String, String> map = api.getCache(clazz.getName());
                 map.remove(entity.compoundId());
                 return 0;
             });

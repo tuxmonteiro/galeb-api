@@ -3,7 +3,7 @@
 
   <groupId>io.galeb</groupId>
   <artifactId>galeb-api</artifactId>
-  <version>3.1.11-SNAPSHOT</version>
+  <version>3.1.11.3-SNAPSHOT</version>
 
   <licenses>
     <license>
@@ -59,15 +59,19 @@
     </dependency>
     <dependency>
       <groupId>io.galeb</groupId>
-      <artifactId>galeb-infinispan</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.galeb</groupId>
       <artifactId>galeb-statsd</artifactId>
       <version>${project.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>javax.cache</groupId>
+      <artifactId>cache-api</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.hazelcast</groupId>
+      <artifactId>hazelcast</artifactId>
+      <version>3.5.4</version>
+    </dependency>
     <dependency>
       <groupId>org.mortbay.jetty.alpn</groupId>
       <artifactId>alpn-boot</artifactId>

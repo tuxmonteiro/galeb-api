@@ -16,7 +16,7 @@
 
 package io.galeb.services.api.jaxrs;
 
-import io.galeb.core.cluster.DistributedMap;
+import io.galeb.core.jcache.CacheFactory;
 import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Farm;
 import io.galeb.services.api.Api;
@@ -24,6 +24,7 @@ import io.galeb.services.api.Api;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.cache.Cache;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 
@@ -34,12 +35,9 @@ public class ApiApplication extends Application {
 
     private Logger logger;
 
-    private DistributedMap<String, String> distributedMap;
-
     public Application setManager(final Api api) {
         farm = api.getFarm();
         logger = api.getLogger();
-        distributedMap = api.getDistributedMap();
         return this;
     }
 
@@ -58,7 +56,8 @@ public class ApiApplication extends Application {
         return logger;
     }
 
-    public DistributedMap<String, String> getDistributedMap() {
-        return distributedMap;
+    public Cache getCache(String key) {
+        return CacheFactory.getCache(key);
     }
+
 }
