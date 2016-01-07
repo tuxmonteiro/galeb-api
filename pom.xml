@@ -67,10 +67,17 @@
       <artifactId>cache-api</artifactId>
       <version>1.0.0</version>
     </dependency>
+    <!--
     <dependency>
       <groupId>com.hazelcast</groupId>
       <artifactId>hazelcast</artifactId>
       <version>3.5.4</version>
+    </dependency>
+    -->
+    <dependency>
+      <groupId>org.apache.ignite</groupId>
+      <artifactId>ignite-core</artifactId>
+      <version>1.5.0.final</version>
     </dependency>
     <dependency>
       <groupId>org.mortbay.jetty.alpn</groupId>
@@ -170,7 +177,8 @@
             <argument>-Xmx2048m</argument>
             <argument>-Dlog4j.configurationFile=log4j.xml</argument>
             <argument>-Dio.galeb.services.api.port=9090</argument>
-            <argument>-Dio.galeb.services.api.queue.limit=1048576</argument>
+            <argument>-DIGNITE_CONFIG_URL=ignite.xml</argument>
+            <argument>-DIGNITE_QUIET=false</argument>
             <argument>-jar</argument>
             <argument>target/galeb-api-${project.version}-uber.jar</argument>
           </arguments>
