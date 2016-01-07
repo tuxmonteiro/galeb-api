@@ -25,7 +25,6 @@ import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
 import io.galeb.core.model.Rule;
 import io.galeb.core.model.VirtualHost;
-import io.galeb.services.api.queue.TaskQueuer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -169,11 +168,8 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             entity.setEntityType(clazz.getSimpleName().toLowerCase());
-            TaskQueuer.push(() -> {
-                ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
-                map.putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
-                return 0;
-            });
+            ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+            map.putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
         } catch (IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
@@ -220,11 +216,8 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             entity.setEntityType(clazz.getSimpleName().toLowerCase());
-            TaskQueuer.push(() -> {
-                ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
-                map.replace(entity.compoundId(), JsonObject.toJsonString(entity));
-                return 0;
-            });
+            ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+            map.replace(entity.compoundId(), JsonObject.toJsonString(entity));
         } catch (final IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
@@ -265,11 +258,8 @@ public class ApiResources {
         try {
             arrayOfClasses.stream().forEach(aclazz -> {
                 farm.getCollection(aclazz).stream().forEach(entity -> {
-                    TaskQueuer.push(() -> {
-                        final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(aclazz.getName());
-                        map.remove(entity.compoundId());
-                        return 0;
-                    });
+                    final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(aclazz.getName());
+                    map.remove(entity.compoundId());
                 });
             });
         } catch (UnsupportedOperationException e) {
@@ -303,11 +293,8 @@ public class ApiResources {
             }
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
-            TaskQueuer.push(() -> {
-                final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
-                map.remove(entity.compoundId());
-                return 0;
-            });
+            final ConcurrentMap<String, String> map = api.getDistributedMap().getMap(clazz.getName());
+            map.remove(entity.compoundId());
         } catch (final IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
