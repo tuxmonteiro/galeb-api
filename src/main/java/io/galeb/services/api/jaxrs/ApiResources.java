@@ -25,7 +25,6 @@ import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
 import io.galeb.core.model.Rule;
 import io.galeb.core.model.VirtualHost;
-import io.galeb.services.api.queue.TaskQueuer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,9 +37,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-import javax.cache.*;
+import javax.cache.Cache;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -59,6 +57,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import static io.galeb.core.model.Farm.getClassNameFromEntityType;
+import static java.util.stream.Collectors.toSet;
 
 @Path("/")
 public class ApiResources {
@@ -170,11 +169,8 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             entity.setEntityType(clazz.getSimpleName().toLowerCase());
-            TaskQueuer.push(() -> {
-                Cache<String, String> map = api.getCache(clazz.getName());
-                map.putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
-                return 0;
-            });
+            Cache<String, String> map = api.getCache(clazz.getName());
+            map.putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
         } catch (IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
@@ -221,11 +217,8 @@ public class ApiResources {
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
             entity.setEntityType(clazz.getSimpleName().toLowerCase());
-            TaskQueuer.push(() -> {
-                Cache<String, String> map = api.getCache(clazz.getName());
-                map.replace(entity.compoundId(), JsonObject.toJsonString(entity));
-                return 0;
-            });
+            Cache<String, String> map = api.getCache(clazz.getName());
+            map.replace(entity.compoundId(), JsonObject.toJsonString(entity));
         } catch (final IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
@@ -265,12 +258,9 @@ public class ApiResources {
 
         try {
             arrayOfClasses.stream().forEach(aclazz -> {
+                final Cache<String, String> map = api.getCache(aclazz.getName());
                 farm.getCollection(aclazz).stream().forEach(entity -> {
-                    TaskQueuer.push(() -> {
-                        final Cache<String, String> map = api.getCache(aclazz.getName());
-                        map.remove(entity.compoundId());
-                        return 0;
-                    });
+                    map.remove(entity.compoundId());
                 });
             });
         } catch (UnsupportedOperationException e) {
@@ -304,11 +294,8 @@ public class ApiResources {
             }
 
             final Entity entity = (Entity) JsonObject.fromJson(entityStr, clazz);
-            TaskQueuer.push(() -> {
-                final Cache<String, String> map = api.getCache(clazz.getName());
-                map.remove(entity.compoundId());
-                return 0;
-            });
+            final Cache<String, String> map = api.getCache(clazz.getName());
+            map.remove(entity.compoundId());
         } catch (final IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
