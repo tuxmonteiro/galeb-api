@@ -16,7 +16,6 @@
 
 package io.galeb.services.api.jaxrs;
 
-import io.galeb.core.controller.EntityController;
 import io.galeb.core.json.JsonObject;
 import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Backend;
@@ -33,10 +32,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.cache.Cache;
 import javax.ws.rs.Consumes;
@@ -56,11 +56,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import static io.galeb.core.model.Farm.getClassNameFromEntityType;
-import static java.util.stream.Collectors.toSet;
-
 @Path("/")
 public class ApiResources {
+
+    private static final String VERSION = "3.1.11";
 
     enum Method {
         GET,
@@ -108,13 +107,24 @@ public class ApiResources {
     @GET
     @Path("{ENTITY_TYPE}")
     @Produces(MediaType.APPLICATION_JSON)
+    @SuppressWarnings("unchecked")
     public Response get(@PathParam("ENTITY_TYPE") String entityType) {
         logReceived("/" + entityType, "", Method.GET);
-        final Farm farm = ((ApiApplication) application).getFarm();
-        final EntityController entityController = farm.getController(getClassNameFromEntityType(entityType));
-
-        if (entityController!=null) {
-            return Response.ok(entityController.get(null)).build();
+        if (entityType.equals("version")) {
+            return Response.ok("{ \"version\" : \"" + VERSION + "\" }").build();
+        }
+        Class<?> entityClass = getClass(entityType);
+        if (entityClass != null) {
+            if (entityType.equals("farm")) {
+                return Response.ok("{ \"info\" : \"'GET /farm' was removed\" }").build();
+            }
+            String classFullName = entityClass.getName();
+            Cache<String, String> cache = ((ApiApplication) application).getCache(classFullName);
+            if (cache != null) {
+                Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
+                return Response.ok("[" + stream.map(Cache.Entry::getValue)
+                        .collect(Collectors.joining(",")) + "]").build();
+            }
         }
         return Response.status(Status.NOT_FOUND).build();
     }
@@ -122,13 +132,18 @@ public class ApiResources {
     @GET
     @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Produces(MediaType.APPLICATION_JSON)
+    @SuppressWarnings("unchecked")
     public Response getOne() {
         logReceived("/" + entityType + "/" + entityId, "", Method.GET);
-        final String result = getEntity(entityType, entityId);
-        entityExist = isEntityExist(entityType, entityId);
 
-        if (entityExist) {
-            return Response.ok(result).build();
+        String classFullName = getClass(entityType).getName();
+        Cache<String, String> cache = ((ApiApplication) application).getCache(classFullName);
+        if (cache != null) {
+            Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
+            return Response.ok("[" + stream
+                    .filter(entry -> entry.getKey().startsWith(entityId + Entity.SEP_COMPOUND_ID))
+                    .map(Cache.Entry::getValue)
+                    .collect(Collectors.joining(",")) + "]").build();
         }
 
         return Response.status(Status.NOT_FOUND).build();
@@ -145,6 +160,7 @@ public class ApiResources {
     @Path("{ENTITY_TYPE}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
+    @SuppressWarnings("unchecked")
     public Response post(InputStream is) {
         String entityStr = "";
         final Class<?> clazz = getClass(entityType);
@@ -197,6 +213,7 @@ public class ApiResources {
     @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
+    @SuppressWarnings("unchecked")
     public Response put(InputStream is) {
         String entityStr = "";
         final Class<?> clazz = getClass(entityType);
@@ -241,12 +258,12 @@ public class ApiResources {
     @Path("{ENTITY_TYPE}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
+    @SuppressWarnings("unchecked")
     public Response deleteAll(@PathParam("ENTITY_TYPE") String entityType) {
         logReceived("/" + entityType, "", Method.DELETE);
         final Class<? extends Entity> clazz = getClass(entityType);
         final ApiApplication api = (ApiApplication)application;
         final Logger logger = api.getLogger();
-        final Farm farm = api.getFarm();
 
         if (clazz==null) {
             logger.error(entityType+" NOT FOUND");
@@ -254,14 +271,12 @@ public class ApiResources {
         }
 
         final List<Class<? extends Entity>> arrayOfClasses = entityType.equals(Farm.class.getSimpleName().toLowerCase()) ?
-                Arrays.asList(Backend.class, BackendPool.class, Rule.class, VirtualHost.class) : Arrays.asList(clazz);
+                Arrays.asList(Backend.class, BackendPool.class, Rule.class, VirtualHost.class) : Collections.singletonList(clazz);
 
         try {
             arrayOfClasses.stream().forEach(aclazz -> {
                 final Cache<String, String> map = api.getCache(aclazz.getName());
-                farm.getCollection(aclazz).stream().forEach(entity -> {
-                    map.remove(entity.compoundId());
-                });
+                map.removeAll();
             });
         } catch (UnsupportedOperationException e) {
             logger.error(e.getMessage());
@@ -275,6 +290,7 @@ public class ApiResources {
     @Path("{ENTITY_TYPE}/{ENTITY_ID}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
+    @SuppressWarnings("unchecked")
     public Response delete(InputStream is) {
         String entityStr = "";
         final Class<?> clazz = getClass(entityType);
@@ -305,24 +321,6 @@ public class ApiResources {
         }
         logReceived("/" + entityType + "/" + entityId, entityStr, Method.DELETE);
         return Response.accepted().build();
-    }
-
-    private String getEntity(String entityType, String id) {
-        final ApiApplication api = ((ApiApplication)application);
-        final Farm farm = api.getFarm();
-        String result = "";
-
-        final EntityController entityController = farm.getController(getClassNameFromEntityType(entityType));
-
-        if (entityController!=null) {
-            result = entityController.get(id);
-        }
-        return result;
-    }
-
-    private boolean isEntityExist(String entityType, String id) {
-        final String result = getEntity(entityType, id);
-        return result != null && !JsonObject.NULL.equals(result) && !result.equals("[]");
     }
 
     private String convertStreamToString(InputStream is) throws IOException {

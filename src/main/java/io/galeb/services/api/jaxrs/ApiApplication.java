@@ -18,7 +18,6 @@ package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.jcache.CacheFactory;
 import io.galeb.core.logging.Logger;
-import io.galeb.core.model.Farm;
 import io.galeb.services.api.Api;
 
 import java.util.HashSet;
@@ -31,18 +30,14 @@ import javax.ws.rs.core.Application;
 @ApplicationPath("/")
 public class ApiApplication extends Application {
 
-    private Farm farm;
-
     private Logger logger;
 
-    public Application setManager(final Api api) {
-        farm = api.getFarm();
-        logger = api.getLogger();
-        return this;
-    }
+    private CacheFactory cacheFactory;
 
-    public Farm getFarm() {
-        return farm;
+    public Application setManager(final Api api) {
+        logger = api.getLogger();
+        cacheFactory = api.getCacheFactory();
+        return this;
     }
 
     @Override
@@ -57,7 +52,7 @@ public class ApiApplication extends Application {
     }
 
     public Cache getCache(String key) {
-        return CacheFactory.getCache(key);
+        return cacheFactory.getCache(key);
     }
 
 }

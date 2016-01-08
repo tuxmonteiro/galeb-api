@@ -17,7 +17,6 @@
 package io.galeb.services.api;
 
 import io.galeb.core.starter.AbstractStarter;
-import io.galeb.services.api.queue.TaskQueuer;
 
 public class Starter extends AbstractStarter {
 
@@ -26,13 +25,6 @@ public class Starter extends AbstractStarter {
     }
 
     public static void main(String[] args) {
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                TaskQueuer.shutdown();
-            }
-        });
 
         loadService(Api.class);
 
