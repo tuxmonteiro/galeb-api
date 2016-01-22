@@ -167,6 +167,7 @@
             <argument>-Dio.galeb.services.api.port=9090</argument>
             <argument>-DIGNITE_CONFIG_URL=ignite.xml</argument>
             <argument>-DIGNITE_QUIET=false</argument>
+            <argument>-DIGNITE_JETTY_PORT=50003</argument>
             <argument>-jar</argument>
             <argument>target/galeb-api-${project.version}-uber.jar</argument>
           </arguments>
