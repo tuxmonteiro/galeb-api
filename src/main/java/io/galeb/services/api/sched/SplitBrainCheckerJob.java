@@ -23,7 +23,6 @@ import io.galeb.core.logging.Logger;
 import io.galeb.core.services.AbstractService;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.cluster.ClusterNode;
-import org.apache.logging.log4j.core.util.SystemClock;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
