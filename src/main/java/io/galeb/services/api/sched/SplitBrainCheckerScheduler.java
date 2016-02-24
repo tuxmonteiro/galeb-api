@@ -33,9 +33,10 @@ public class SplitBrainCheckerScheduler implements JobListener {
 
     public static final String PROP_API_CHECK_INTERVAL = PROP_API_PREFIX + "splitbrain.check.interval";
     public static final String PROP_API_CHECK_SERVER   = PROP_API_PREFIX + "splitbrain.check.server";
+    public static final String PROP_API_PREFERRED_ZONE = PROP_API_PREFIX + "splitbrain.preferred.zone";
 
     private static final String CHECK_INTERVAL_DEFAULT = "10000";
-    private static final String CHECK_SERVER_DEFAULT = "localhost:9010";
+    private static final String CHECK_SERVER_DEFAULT   = "localhost:9010";
 
     static {
         if (System.getProperty(PROP_API_CHECK_INTERVAL) == null) {

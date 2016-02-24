@@ -23,7 +23,12 @@ import io.galeb.core.logging.Logger;
 import io.galeb.core.services.AbstractService;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.cluster.ClusterNode;
-import org.quartz.*;
+import org.apache.logging.log4j.core.util.SystemClock;
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
@@ -37,6 +42,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static io.galeb.services.api.sched.SplitBrainCheckerScheduler.PROP_API_CHECK_SERVER;
+import static io.galeb.services.api.sched.SplitBrainCheckerScheduler.PROP_API_PREFERRED_ZONE;
+
 
 @DisallowConcurrentExecution
 public class SplitBrainCheckerJob implements Job {
@@ -48,7 +56,6 @@ public class SplitBrainCheckerJob implements Job {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @SuppressWarnings("unchecked")
     private void init(final JobDataMap jobDataMap) {
         if (!logger.isPresent()) {
             logger = Optional.ofNullable((Logger) jobDataMap.get(AbstractService.LOGGER));
@@ -82,8 +89,11 @@ public class SplitBrainCheckerJob implements Job {
                 boolean exist = localNodes.stream().filter(remoteNodes::contains).count() > 0;
 
                 if (!exist) {
+                    String preferred = System.getProperty(PROP_API_PREFERRED_ZONE);
                     if (localNodes.size() < remoteNodes.size()) {
-                        ignite.cluster().stopNodes();
+                        shutdownNodes();
+                    } else if (preferred != null && !Boolean.getBoolean(preferred)) {
+                        shutdownNodes();
                     }
                 }
             }
@@ -95,8 +105,12 @@ public class SplitBrainCheckerJob implements Job {
 
     }
 
+    private void shutdownNodes() {
+        ignite.cluster().stopNodes();
+    }
+
     private JsonNode getJson() throws URISyntaxException, IOException {
-        String path = "http://" + System.getProperty(SplitBrainCheckerScheduler.PROP_API_CHECK_SERVER) + "/ignite?cmd=top";
+        String path = "http://" + System.getProperty(PROP_API_CHECK_SERVER) + "/ignite?cmd=top";
         JsonNode json = null;
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(path);
