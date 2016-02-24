@@ -18,21 +18,13 @@ package io.galeb.services.api;
 
 import io.galeb.core.services.AbstractService;
 import io.galeb.services.api.jaxrs.ApiApplication;
-import io.galeb.services.api.sched.SplitBrainCheckerJob;
 import io.galeb.services.api.sched.SplitBrainCheckerScheduler;
 import io.galeb.undertow.jaxrs.Deployer;
-import org.quartz.*;
-import org.quartz.impl.StdSchedulerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.annotation.PostConstruct;
-
-import static org.quartz.JobBuilder.newJob;
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-import static org.quartz.TriggerBuilder.newTrigger;
 
 public class Api extends AbstractService {
 
