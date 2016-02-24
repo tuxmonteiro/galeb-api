@@ -19,6 +19,7 @@ package io.galeb.services.api;
 import io.galeb.core.services.AbstractService;
 import io.galeb.services.api.jaxrs.ApiApplication;
 import io.galeb.services.api.sched.SplitBrainCheckerJob;
+import io.galeb.services.api.sched.SplitBrainCheckerScheduler;
 import io.galeb.undertow.jaxrs.Deployer;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -33,21 +34,17 @@ import static org.quartz.JobBuilder.newJob;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
 
-public class Api extends AbstractService implements JobListener {
+public class Api extends AbstractService {
 
-    private static final String PROP_API_PREFIX         = Api.class.getPackage().getName() + ".";
+    public static final  String PROP_API_PREFIX    = Api.class.getPackage().getName() + ".";
 
-    private static final String PROP_API_PORT           = PROP_API_PREFIX + "port";
+    private static final String PROP_API_PORT      = PROP_API_PREFIX + "port";
 
-    private static final String PROP_API_IOTHREADS      = PROP_API_PREFIX + "iothread";
+    private static final String PROP_API_IOTHREADS = PROP_API_PREFIX + "iothread";
 
-    public static final String PROP_API_CHECK_INTERVAL = PROP_API_PREFIX + "splitbrain.check.interval";
+    public static final  int    DEFAULT_PORT       = 9090;
 
-    public static final String PROP_API_CHECK_SERVER   = PROP_API_PREFIX + "splitbrain.check.server";
-
-    public static final int     DEFAULT_PORT                = 9090;
-
-    private Scheduler scheduler;
+    private final SplitBrainCheckerScheduler splitBrainCheckerScheduler = new SplitBrainCheckerScheduler();
 
     static {
         if (System.getProperty(PROP_API_PORT)==null) {
@@ -66,8 +63,7 @@ public class Api extends AbstractService implements JobListener {
     public void init() {
 
         super.prelaunch();
-        setupScheduler();
-        startJobs();
+        splitBrainCheckerScheduler.setFarm(farm).setLogger(logger).start();
 
         int port = Integer.parseInt(System.getProperty(PROP_API_PORT));
         String iothreads = System.getProperty(PROP_API_IOTHREADS);
@@ -84,60 +80,4 @@ public class Api extends AbstractService implements JobListener {
         logger.debug(String.format("[0.0.0.0:%d] ready", port));
     }
 
-    private void setupScheduler() {
-        try {
-            scheduler = new StdSchedulerFactory().getScheduler();
-            scheduler.getListenerManager().addJobListener(this);
-
-            scheduler.start();
-        } catch (SchedulerException e) {
-            logger.error(e);
-        }
-    }
-
-    private void startJobs() {
-        try {
-            if (scheduler.isStarted()) {
-                int interval = Integer.parseInt(System.getProperty(PROP_API_CHECK_INTERVAL, "10000"));
-                startChecker(interval);
-            }
-        } catch (SchedulerException e) {
-            logger.error(e);
-        }
-    }
-
-    private void startChecker(int interval) throws SchedulerException {
-        Trigger triggerCheckerJob = newTrigger().withIdentity(UUID.randomUUID().toString())
-                .startNow()
-                .withSchedule(simpleSchedule().withIntervalInMilliseconds(interval).repeatForever())
-                .build();
-
-        JobDataMap jobdataMap = new JobDataMap();
-        jobdataMap.put(AbstractService.FARM, farm);
-        jobdataMap.put(AbstractService.LOGGER, logger);
-
-        JobDetail checkerJob = newJob(SplitBrainCheckerJob.class).withIdentity(SplitBrainCheckerJob.class.getName())
-                .setJobData(jobdataMap)
-                .build();
-
-        scheduler.scheduleJob(checkerJob, triggerCheckerJob);
-    }
-
-    @Override
-    public String getName() { return toString(); }
-
-    @Override
-    public void jobToBeExecuted(JobExecutionContext context) {
-        logger.debug(context.getJobDetail().getKey().getName()+" to be executed");
-    }
-
-    @Override
-    public void jobExecutionVetoed(JobExecutionContext context) {
-        logger.debug(context.getJobDetail().getKey().getName()+" vetoed");
-    }
-
-    @Override
-    public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
-        logger.debug(context.getJobDetail().getKey().getName()+" was executed");
-    }
 }

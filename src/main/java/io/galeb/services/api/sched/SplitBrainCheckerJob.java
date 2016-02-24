@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.galeb.core.cluster.ignite.IgniteCacheFactory;
 import io.galeb.core.logging.Logger;
 import io.galeb.core.services.AbstractService;
-import io.galeb.services.api.Api;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.cluster.ClusterNode;
 import org.quartz.*;
@@ -97,7 +96,7 @@ public class SplitBrainCheckerJob implements Job {
     }
 
     private JsonNode getJson() throws URISyntaxException, IOException {
-        String path = "http://" + System.getProperty(Api.PROP_API_CHECK_SERVER, "localhost:9010") + "/ignite?cmd=top";
+        String path = "http://" + System.getProperty(SplitBrainCheckerScheduler.PROP_API_CHECK_SERVER) + "/ignite?cmd=top";
         JsonNode json = null;
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(path);
