@@ -18,6 +18,7 @@ package io.galeb.services.api;
 
 import io.galeb.core.services.AbstractService;
 import io.galeb.services.api.jaxrs.ApiApplication;
+import io.galeb.services.api.sched.SplitBrainCheckerScheduler;
 import io.galeb.undertow.jaxrs.Deployer;
 
 import java.util.HashMap;
@@ -27,20 +28,22 @@ import javax.annotation.PostConstruct;
 
 public class Api extends AbstractService {
 
-    private static final String PROP_MANAGER_PREFIX    = Api.class.getPackage().getName()+".";
+    public static final  String PROP_API_PREFIX    = Api.class.getPackage().getName() + ".";
 
-    private static final String PROP_MANAGER_PORT      = PROP_MANAGER_PREFIX+"port";
+    private static final String PROP_API_PORT      = PROP_API_PREFIX + "port";
 
-    private static final String PROP_MANAGER_IOTHREADS = PROP_MANAGER_PREFIX+"iothread";
+    private static final String PROP_API_IOTHREADS = PROP_API_PREFIX + "iothread";
 
-    public static final int     DEFAULT_PORT           = 9090;
+    public static final  int    DEFAULT_PORT       = 9090;
+
+    private final SplitBrainCheckerScheduler splitBrainCheckerScheduler = new SplitBrainCheckerScheduler();
 
     static {
-        if (System.getProperty(PROP_MANAGER_PORT)==null) {
-            System.setProperty(PROP_MANAGER_PORT, Integer.toString(DEFAULT_PORT));
+        if (System.getProperty(PROP_API_PORT)==null) {
+            System.setProperty(PROP_API_PORT, Integer.toString(DEFAULT_PORT));
         }
-        if (System.getProperty(PROP_MANAGER_IOTHREADS)==null) {
-            System.setProperty(PROP_MANAGER_IOTHREADS, String.valueOf(Runtime.getRuntime().availableProcessors()));
+        if (System.getProperty(PROP_API_IOTHREADS)==null) {
+            System.setProperty(PROP_API_IOTHREADS, String.valueOf(Runtime.getRuntime().availableProcessors()));
         }
     }
 
@@ -52,9 +55,10 @@ public class Api extends AbstractService {
     public void init() {
 
         super.prelaunch();
+        splitBrainCheckerScheduler.setFarm(farm).setLogger(logger).start();
 
-        int port = Integer.parseInt(System.getProperty(PROP_MANAGER_PORT));
-        String iothreads = System.getProperty(PROP_MANAGER_IOTHREADS);
+        int port = Integer.parseInt(System.getProperty(PROP_API_PORT));
+        String iothreads = System.getProperty(PROP_API_IOTHREADS);
 
         final Map<String, String> options = new HashMap<>();
         options.put("IoThreads", iothreads);
