@@ -95,7 +95,7 @@ public class SplitBrainCheckerJob implements Job {
                                                     .collect(Collectors.toList());
 
                     if (localNodes.containsAll(remoteNodes)) {
-                        logger.ifPresent(log -> log.info("Cluster OK! [ " + server + "]"));
+                        logger.ifPresent(log -> log.info("Cluster OK! [ " + server + " ]"));
                         errorCounter.set(0);
                         return;
                     }
@@ -104,11 +104,20 @@ public class SplitBrainCheckerJob implements Job {
 
                     if (splitBrain) {
                         String preferred = System.getProperty(PROP_API_PREFERRED_ZONE);
-                        if (localNodes.size() > remoteNodes.size() || (preferred != null && !Boolean.getBoolean(preferred))) {
-                            warnSplitBrain();
+                        int localNodesSize = localNodes.size();
+                        int remoteNodesSize = remoteNodes.size();
+                        if (localNodesSize < remoteNodesSize) {
+                            logger.ifPresent(log -> log.error("Local cluster segment has " + localNodesSize + " nodes (remote has " + remoteNodesSize + " nodes)"));
+                            shutdownNodes();
                             return;
                         }
-                        shutdownNodes();
+                        boolean isPreferred = preferred != null && Boolean.valueOf(preferred);
+                        logger.ifPresent(log -> log.info("Local cluster preferred: " + (isPreferred ? "true" : "false")));
+                        if (!isPreferred) {
+                            shutdownNodes();
+                            return;
+                        }
+                        warnSplitBrain();
                     }
                 }
             } catch (URISyntaxException | IOException e) {
