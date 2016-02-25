@@ -30,14 +30,17 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -55,6 +58,8 @@ public class SplitBrainCheckerJob implements Job {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
+    private final static AtomicInteger errorCounter = new AtomicInteger(0);
+
     private void init(final JobDataMap jobDataMap) {
         if (!logger.isPresent()) {
             logger = Optional.ofNullable((Logger) jobDataMap.get(AbstractService.LOGGER));
@@ -68,57 +73,80 @@ public class SplitBrainCheckerJob implements Job {
 
         logger.ifPresent(log -> log.info("=== " + this.getClass().getSimpleName() + " ==="));
 
-        try {
-            JsonNode json = getJson();
+        String servers = System.getProperty(PROP_API_CHECK_SERVER);
+        List<String> listOfServers = Arrays.asList(servers.split(","));
 
-            if (json != null) {
-                List<String> localNodes = ignite.cluster().nodes().stream()
-                                                .map(ClusterNode::id)
-                                                .map(UUID::toString)
-                                                .collect(Collectors.toList());
-                List<String> remoteNodes = StreamSupport.stream(json.get("response").spliterator(), false)
-                                                .map(node -> node.get("nodeId").asText())
-                                                .collect(Collectors.toList());
+        List<String> localNodes = ignite.cluster().nodes().stream()
+                .map(ClusterNode::id)
+                .map(UUID::toString)
+                .collect(Collectors.toList());
 
-                if (localNodes.containsAll(remoteNodes)) {
-                    logger.ifPresent(log -> log.info("Cluster OK!"));
-                    return;
-                }
+        listOfServers.stream().forEach(server -> {
 
-                boolean exist = localNodes.stream().filter(remoteNodes::contains).count() > 0;
+            try {
+                String path = "http://" + server + "/ignite?cmd=top";
 
-                if (!exist) {
-                    String preferred = System.getProperty(PROP_API_PREFERRED_ZONE);
-                    if (localNodes.size() < remoteNodes.size()) {
-                        shutdownNodes();
-                    } else if (preferred != null && !Boolean.getBoolean(preferred)) {
+                JsonNode json = getJson(path);
+
+                if (json != null) {
+
+                    List<String> remoteNodes = StreamSupport.stream(json.get("response").spliterator(), false)
+                                                    .map(node -> node.get("nodeId").asText())
+                                                    .collect(Collectors.toList());
+
+                    if (localNodes.containsAll(remoteNodes)) {
+                        logger.ifPresent(log -> log.info("Cluster OK! [ " + server + "]"));
+                        errorCounter.set(0);
+                        return;
+                    }
+
+                    boolean splitBrain = localNodes.stream().filter(remoteNodes::contains).count() == 0;
+
+                    if (splitBrain) {
+                        String preferred = System.getProperty(PROP_API_PREFERRED_ZONE);
+                        if (localNodes.size() > remoteNodes.size() || (preferred != null && !Boolean.getBoolean(preferred))) {
+                            warnSplitBrain();
+                            return;
+                        }
                         shutdownNodes();
                     }
                 }
+            } catch (URISyntaxException | IOException e) {
+                logger.ifPresent(log -> log.error(e));
             }
-        } catch (URISyntaxException | IOException e) {
-            logger.ifPresent(log -> log.error(e));
-        }
+
+        });
 
         logger.ifPresent(log -> log.debug("Job SplitBrainChecker done."));
 
     }
 
-    private void shutdownNodes() {
-        ignite.cluster().stopNodes();
+    private void warnSplitBrain() {
+        logger.ifPresent(log -> log.warn("Split Brain!!! My Zone [ " +
+                ignite.cluster().hostNames().stream().reduce((t, c) -> t + ", " + c).get() + " ] will remains UP"));
     }
 
-    private JsonNode getJson() throws URISyntaxException, IOException {
-        String path = "http://" + System.getProperty(PROP_API_CHECK_SERVER) + "/ignite?cmd=top";
+    private void shutdownNodes() {
+        if (errorCounter.incrementAndGet() >= 2) {
+            logger.ifPresent(log -> log.error("Split Brain!!! Shutting down my segment"));
+            ignite.cluster().stopNodes();
+        }
+    }
+
+    private JsonNode getJson(String path) throws URISyntaxException, IOException {
         JsonNode json = null;
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(path);
         RequestEntity<Void> request = RequestEntity.get(uri).build();
-        ResponseEntity<String> response = restTemplate.exchange(request, String.class);
-        boolean result = response.getStatusCode().value() < 400;
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+            boolean result = response.getStatusCode().value() < 400;
 
-        if (result) {
-            json = mapper.readTree(response.getBody());
+            if (result) {
+                json = mapper.readTree(response.getBody());
+            }
+        } catch (RestClientException e) {
+            logger.ifPresent(log -> log.error("Split Brain Check FAILED. " + e.getMessage()));
         }
         return json;
     }
