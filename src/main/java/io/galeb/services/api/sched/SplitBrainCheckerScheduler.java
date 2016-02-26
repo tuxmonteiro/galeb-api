@@ -31,14 +31,19 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 public class SplitBrainCheckerScheduler implements JobListener {
 
+    public static final String PROP_API_CHECK_ENABLE   = PROP_API_PREFIX + "splitbrain.check.enable";
     public static final String PROP_API_CHECK_INTERVAL = PROP_API_PREFIX + "splitbrain.check.interval";
     public static final String PROP_API_CHECK_SERVER   = PROP_API_PREFIX + "splitbrain.check.server";
     public static final String PROP_API_PREFERRED_ZONE = PROP_API_PREFIX + "splitbrain.preferred.zone";
 
+    private static final String CHECK_ENABLE_DEFAULT   = "false";
     private static final String CHECK_INTERVAL_DEFAULT = "10000";
     private static final String CHECK_SERVER_DEFAULT   = "localhost:9010";
 
     static {
+        if (System.getProperty(PROP_API_CHECK_ENABLE) == null) {
+            System.setProperty(PROP_API_CHECK_ENABLE, CHECK_ENABLE_DEFAULT);
+        }
         if (System.getProperty(PROP_API_CHECK_INTERVAL) == null) {
             System.setProperty(PROP_API_CHECK_INTERVAL, CHECK_INTERVAL_DEFAULT);
         }
@@ -62,8 +67,12 @@ public class SplitBrainCheckerScheduler implements JobListener {
     }
 
     public void start() {
-        setupScheduler();
-        startJobs();
+        String enableCheckProp = System.getProperty(PROP_API_CHECK_ENABLE);
+        boolean enableCheck = enableCheckProp != null && Boolean.valueOf(enableCheckProp);
+        if (enableCheck) {
+            setupScheduler();
+            startJobs();
+        }
     }
 
     private void setupScheduler() {
