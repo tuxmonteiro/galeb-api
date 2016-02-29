@@ -80,8 +80,6 @@ public class ApiResources {
 
     @DefaultValue("") @PathParam("ENTITY_ID") String entityId;
 
-    private boolean entityExist = false;
-
     private final Map<String, Class<? extends Entity>> mapEntityClass = new ConcurrentHashMap<>();
 
     public ApiResources() {
@@ -109,6 +107,9 @@ public class ApiResources {
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
     public Response get(@PathParam("ENTITY_TYPE") String entityType) {
+        final ApiApplication api = (ApiApplication) application;
+        Logger logger = api.getLogger();
+
         logReceived("/" + entityType, "", Method.GET);
         if (entityType.equals("version")) {
             return Response.ok("{ \"version\" : \"" + VERSION + "\" }").build();
@@ -119,7 +120,13 @@ public class ApiResources {
                 return Response.ok("{ \"info\" : \"'GET /farm' was removed\" }").build();
             }
             String classFullName = entityClass.getName();
-            Cache<String, String> cache = ((ApiApplication) application).getCache(classFullName);
+            Cache<String, String> cache;
+            try {
+                cache = api.getCache(classFullName);
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                return Response.status(Status.SERVICE_UNAVAILABLE).build();
+            }
             if (cache != null) {
                 Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
                 return Response.ok("[" + stream.map(Cache.Entry::getValue)
@@ -134,10 +141,18 @@ public class ApiResources {
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
     public Response getOne() {
+        final ApiApplication api = (ApiApplication) application;
+        Logger logger = api.getLogger();
         logReceived("/" + entityType + "/" + entityId, "", Method.GET);
 
         String classFullName = getClass(entityType).getName();
-        Cache<String, String> cache = ((ApiApplication) application).getCache(classFullName);
+        Cache<String, String> cache;
+        try {
+            cache = api.getCache(classFullName);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return Response.status(Status.SERVICE_UNAVAILABLE).build();
+        }
         if (cache != null) {
             Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
             return Response.ok("[" + stream
@@ -162,9 +177,9 @@ public class ApiResources {
     @Produces(MediaType.TEXT_PLAIN)
     @SuppressWarnings("unchecked")
     public Response post(InputStream is) {
-        String entityStr = "";
+        String entityStr;
         final Class<?> clazz = getClass(entityType);
-        final ApiApplication api = ((ApiApplication)application);
+        final ApiApplication api = (ApiApplication)application;
         final Logger logger = api.getLogger();
 
         try {
@@ -190,7 +205,7 @@ public class ApiResources {
         } catch (IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
-        } catch (UnsupportedOperationException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
@@ -215,9 +230,9 @@ public class ApiResources {
     @Produces(MediaType.TEXT_PLAIN)
     @SuppressWarnings("unchecked")
     public Response put(InputStream is) {
-        String entityStr = "";
+        String entityStr;
         final Class<?> clazz = getClass(entityType);
-        final ApiApplication api = ((ApiApplication)application);
+        final ApiApplication api = (ApiApplication)application;
         final Logger logger = api.getLogger();
 
         try {
@@ -239,7 +254,7 @@ public class ApiResources {
         } catch (final IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
-        } catch (UnsupportedOperationException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
@@ -278,7 +293,7 @@ public class ApiResources {
                 final Cache<String, String> map = api.getCache(aclazz.getName());
                 map.removeAll();
             });
-        } catch (UnsupportedOperationException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
@@ -292,9 +307,9 @@ public class ApiResources {
     @Produces(MediaType.TEXT_PLAIN)
     @SuppressWarnings("unchecked")
     public Response delete(InputStream is) {
-        String entityStr = "";
+        String entityStr;
         final Class<?> clazz = getClass(entityType);
-        final ApiApplication api = ((ApiApplication)application);
+        final ApiApplication api = (ApiApplication)application;
         final Logger logger = api.getLogger();
 
         try {
@@ -315,7 +330,7 @@ public class ApiResources {
         } catch (final IOException e) {
             logger.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
-        } catch (UnsupportedOperationException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
