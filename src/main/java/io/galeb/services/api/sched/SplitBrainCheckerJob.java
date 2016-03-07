@@ -52,7 +52,7 @@ import static io.galeb.services.api.sched.SplitBrainCheckerScheduler.PROP_API_PR
 public class SplitBrainCheckerJob implements Job {
 
     private Optional<Logger> logger = Optional.empty();
-    private static IgniteCacheFactory cacheFactory = IgniteCacheFactory.INSTANCE;
+    private static IgniteCacheFactory cacheFactory = IgniteCacheFactory.getInstance();
 
     private static Ignite ignite = (Ignite) cacheFactory.getClusterInstance();
 

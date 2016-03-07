@@ -16,6 +16,8 @@
 
 package io.galeb.services.api;
 
+import io.galeb.core.cluster.ignite.IgniteCacheFactory;
+import io.galeb.core.cluster.ignite.IgniteClusterLocker;
 import io.galeb.core.services.AbstractService;
 import io.galeb.services.api.jaxrs.ApiApplication;
 import io.galeb.services.api.sched.SplitBrainCheckerScheduler;
@@ -53,8 +55,11 @@ public class Api extends AbstractService {
 
     @PostConstruct
     public void init() {
+        cacheFactory = IgniteCacheFactory.getInstance(this).start();
+        clusterLocker = IgniteClusterLocker.INSTANCE;
+        cacheFactory.setLogger(logger);
+        clusterLocker.setLogger(logger);
 
-        super.prelaunch();
         splitBrainCheckerScheduler.setFarm(farm).setLogger(logger).start();
 
         int port = Integer.parseInt(System.getProperty(PROP_API_PORT));
