@@ -55,10 +55,8 @@ public class Api extends AbstractService {
 
     @PostConstruct
     public void init() {
-        cacheFactory = IgniteCacheFactory.getInstance(this).start();
-        clusterLocker = IgniteClusterLocker.INSTANCE;
-        cacheFactory.setLogger(logger);
-        clusterLocker.setLogger(logger);
+        cacheFactory = IgniteCacheFactory.getInstance(this).setLogger(logger).start();
+        clusterLocker = IgniteClusterLocker.getInstance().setLogger(logger).start();
 
         splitBrainCheckerScheduler.setFarm(farm).setLogger(logger).start();
 
