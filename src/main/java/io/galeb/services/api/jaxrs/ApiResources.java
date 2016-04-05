@@ -17,13 +17,14 @@
 package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.json.JsonObject;
-import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Backend;
 import io.galeb.core.model.BackendPool;
 import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
 import io.galeb.core.model.Rule;
 import io.galeb.core.model.VirtualHost;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,7 +33,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,6 +62,8 @@ import javax.ws.rs.core.UriInfo;
 
 @Path("/")
 public class ApiResources {
+
+    private static final Logger LOGGER = LogManager.getLogger(ApiResources.class);
 
     private static final String VERSION = "3.1.11";
 
@@ -91,8 +97,7 @@ public class ApiResources {
     }
 
     private void logReceived(String uri, String body, Method method) {
-        Logger logger = ((ApiApplication) application).getLogger();
-        logger.info("[" + method.toString() + "] " + uri + ": " + body);
+        LOGGER.info("[" + method.toString() + "] " + uri + ": " + body);
     }
 
     @GET
@@ -108,7 +113,6 @@ public class ApiResources {
     @SuppressWarnings("unchecked")
     public Response get(@PathParam("ENTITY_TYPE") String entityType) {
         final ApiApplication api = (ApiApplication) application;
-        Logger logger = api.getLogger();
 
         logReceived("/" + entityType, "", Method.GET);
         if (entityType.equals("version")) {
@@ -124,7 +128,7 @@ public class ApiResources {
             try {
                 cache = api.getCache(classFullName);
             } catch (Exception e) {
-                logger.error(e.getMessage());
+                LOGGER.error(e.getMessage());
                 return Response.status(Status.SERVICE_UNAVAILABLE).build();
             }
             if (cache != null) {
@@ -142,7 +146,6 @@ public class ApiResources {
     @SuppressWarnings("unchecked")
     public Response getOne() {
         final ApiApplication api = (ApiApplication) application;
-        Logger logger = api.getLogger();
         logReceived("/" + entityType + "/" + entityId, "", Method.GET);
 
         String classFullName = getClass(entityType).getName();
@@ -150,7 +153,7 @@ public class ApiResources {
         try {
             cache = api.getCache(classFullName);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         if (cache != null) {
@@ -180,21 +183,20 @@ public class ApiResources {
         String entityStr;
         final Class<?> clazz = getClass(entityType);
         final ApiApplication api = (ApiApplication)application;
-        final Logger logger = api.getLogger();
 
         try {
             if (clazz==null) {
-                logger.error(entityType+" NOT FOUND");
+                LOGGER.error(entityType+" NOT FOUND");
                 return Response.status(Status.BAD_REQUEST).build();
             }
             if (entityType.equals(Farm.class.getSimpleName().toLowerCase())) {
-                logger.error("POST /"+entityType+" not supported");
+                LOGGER.error("POST /"+entityType+" not supported");
                 return Response.status(Status.BAD_REQUEST).build();
             }
 
             entityStr = convertStreamToString(is);
             if (entityStr.isEmpty()) {
-                logger.error("Json Body NOT FOUND");
+                LOGGER.error("Json Body NOT FOUND");
                 return Response.status(Status.BAD_REQUEST).build();
             }
 
@@ -203,10 +205,10 @@ public class ApiResources {
             Cache<String, String> map = api.getCache(clazz.getName());
             map.putIfAbsent(entity.compoundId(), JsonObject.toJsonString(entity));
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType, entityStr, Method.POST);
@@ -233,17 +235,16 @@ public class ApiResources {
         String entityStr;
         final Class<?> clazz = getClass(entityType);
         final ApiApplication api = (ApiApplication)application;
-        final Logger logger = api.getLogger();
 
         try {
             if (clazz==null) {
-                logger.error(entityType+" NOT FOUND");
+                LOGGER.error(entityType+" NOT FOUND");
                 return Response.status(Status.BAD_REQUEST).build();
             }
 
             entityStr = convertStreamToString(is);
             if (entityStr.isEmpty()) {
-                logger.error("Json Body NOT FOUND");
+                LOGGER.error("Json Body NOT FOUND");
                 return Response.status(Status.BAD_REQUEST).build();
             }
 
@@ -252,10 +253,10 @@ public class ApiResources {
             Cache<String, String> map = api.getCache(clazz.getName());
             map.replace(entity.compoundId(), JsonObject.toJsonString(entity));
         } catch (final IOException e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType + "/" + entityId, entityStr, Method.PUT);
@@ -278,10 +279,9 @@ public class ApiResources {
         logReceived("/" + entityType, "", Method.DELETE);
         final Class<? extends Entity> clazz = getClass(entityType);
         final ApiApplication api = (ApiApplication)application;
-        final Logger logger = api.getLogger();
 
         if (clazz==null) {
-            logger.error(entityType+" NOT FOUND");
+            LOGGER.error(entityType+" NOT FOUND");
             return Response.status(Status.BAD_REQUEST).build();
         }
 
@@ -294,7 +294,7 @@ public class ApiResources {
                 map.removeAll();
             });
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
 
@@ -310,17 +310,16 @@ public class ApiResources {
         String entityStr;
         final Class<?> clazz = getClass(entityType);
         final ApiApplication api = (ApiApplication)application;
-        final Logger logger = api.getLogger();
 
         try {
             if (clazz==null) {
-                logger.error(entityType+" NOT FOUND");
+                LOGGER.error(entityType+" NOT FOUND");
                 return Response.status(Status.BAD_REQUEST).build();
             }
 
             entityStr = convertStreamToString(is);
             if (entityStr.isEmpty()) {
-                logger.error("Json Body NOT FOUND");
+                LOGGER.error("Json Body NOT FOUND");
                 return Response.status(Status.BAD_REQUEST).build();
             }
 
@@ -328,10 +327,10 @@ public class ApiResources {
             final Cache<String, String> map = api.getCache(clazz.getName());
             map.remove(entity.compoundId());
         } catch (final IOException e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return Response.status(Status.BAD_REQUEST).build();
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
         logReceived("/" + entityType + "/" + entityId, entityStr, Method.DELETE);

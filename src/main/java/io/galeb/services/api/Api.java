@@ -22,6 +22,8 @@ import io.galeb.core.services.AbstractService;
 import io.galeb.services.api.jaxrs.ApiApplication;
 import io.galeb.services.api.sched.SplitBrainCheckerScheduler;
 import io.galeb.undertow.jaxrs.Deployer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +31,8 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 public class Api extends AbstractService {
+
+    private static final Logger LOGGER = LogManager.getLogger(Api.class);
 
     public static final  String PROP_API_PREFIX    = Api.class.getPackage().getName() + ".";
 
@@ -55,10 +59,10 @@ public class Api extends AbstractService {
 
     @PostConstruct
     public void init() {
-        cacheFactory = IgniteCacheFactory.getInstance().setLogger(logger).start();
-        clusterLocker = IgniteClusterLocker.getInstance().setLogger(logger).start();
+        cacheFactory = IgniteCacheFactory.getInstance().start();
+        clusterLocker = IgniteClusterLocker.getInstance().start();
 
-        splitBrainCheckerScheduler.setFarm(farm).setLogger(logger).start();
+        splitBrainCheckerScheduler.setFarm(farm).start();
 
         int port = Integer.parseInt(System.getProperty(PROP_API_PORT));
         String iothreads = System.getProperty(PROP_API_IOTHREADS);
@@ -72,7 +76,7 @@ public class Api extends AbstractService {
                       .setOptions(options)
                       .start();
 
-        logger.debug(String.format("[0.0.0.0:%d] ready", port));
+        LOGGER.debug(String.format("[0.0.0.0:%d] ready", port));
     }
 
 }

@@ -17,8 +17,9 @@
 package io.galeb.services.api.jaxrs;
 
 import io.galeb.core.jcache.CacheFactory;
-import io.galeb.core.logging.Logger;
 import io.galeb.services.api.Api;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,12 +31,11 @@ import javax.ws.rs.core.Application;
 @ApplicationPath("/")
 public class ApiApplication extends Application {
 
-    private Logger logger;
+    private static final Logger LOGGER = LogManager.getLogger(ApiApplication.class);
 
     private CacheFactory cacheFactory;
 
     public Application setManager(final Api api) {
-        logger = api.getLogger();
         cacheFactory = api.getCacheFactory();
         return this;
     }
@@ -45,10 +45,6 @@ public class ApiApplication extends Application {
         final Set<Class<?>> classes = new HashSet<>();
         classes.add(ApiResources.class);
         return classes;
-    }
-
-    public Logger getLogger() {
-        return logger;
     }
 
     public Cache getCache(String key) {

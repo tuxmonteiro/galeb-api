@@ -19,10 +19,11 @@ package io.galeb.services.api.sched;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.galeb.core.cluster.ignite.IgniteCacheFactory;
-import io.galeb.core.logging.Logger;
 import io.galeb.core.services.AbstractService;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.cluster.ClusterNode;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -51,7 +52,8 @@ import static io.galeb.services.api.sched.SplitBrainCheckerScheduler.PROP_API_PR
 @DisallowConcurrentExecution
 public class SplitBrainCheckerJob implements Job {
 
-    private Optional<Logger> logger = Optional.empty();
+    private static final Logger LOGGER = LogManager.getLogger(SplitBrainCheckerJob.class);
+
     private static IgniteCacheFactory cacheFactory = IgniteCacheFactory.getInstance();
 
     private static Ignite ignite = (Ignite) cacheFactory.getClusterInstance();
@@ -61,9 +63,7 @@ public class SplitBrainCheckerJob implements Job {
     private final static AtomicInteger errorCounter = new AtomicInteger(0);
 
     private void init(final JobDataMap jobDataMap) {
-        if (!logger.isPresent()) {
-            logger = Optional.ofNullable((Logger) jobDataMap.get(AbstractService.LOGGER));
-        }
+        //
     }
 
     @Override
@@ -71,7 +71,7 @@ public class SplitBrainCheckerJob implements Job {
 
         init(context.getJobDetail().getJobDataMap());
 
-        logger.ifPresent(log -> log.info("=== " + this.getClass().getSimpleName() + " ==="));
+        LOGGER.info("=== " + this.getClass().getSimpleName() + " ===");
 
         String servers = System.getProperty(PROP_API_CHECK_SERVER);
         List<String> listOfServers = Arrays.asList(servers.split(","));
@@ -95,7 +95,7 @@ public class SplitBrainCheckerJob implements Job {
                                                     .collect(Collectors.toList());
 
                     if (localNodes.containsAll(remoteNodes)) {
-                        logger.ifPresent(log -> log.info("Cluster OK! [ " + server + " ]"));
+                        LOGGER.info("Cluster OK! [ " + server + " ]");
                         errorCounter.set(0);
                         return;
                     }
@@ -107,12 +107,12 @@ public class SplitBrainCheckerJob implements Job {
                         int localNodesSize = localNodes.size();
                         int remoteNodesSize = remoteNodes.size();
                         if (localNodesSize < remoteNodesSize) {
-                            logger.ifPresent(log -> log.error("Local cluster segment has " + localNodesSize + " nodes (remote has " + remoteNodesSize + " nodes)"));
+                            LOGGER.error("Local cluster segment has " + localNodesSize + " nodes (remote has " + remoteNodesSize + " nodes)");
                             shutdownNodes();
                             return;
                         }
                         boolean isPreferred = preferred != null && Boolean.valueOf(preferred);
-                        logger.ifPresent(log -> log.info("Local cluster preferred: " + (isPreferred ? "true" : "false")));
+                        LOGGER.info("Local cluster preferred: " + (isPreferred ? "true" : "false"));
                         if (!isPreferred) {
                             shutdownNodes();
                             return;
@@ -121,23 +121,23 @@ public class SplitBrainCheckerJob implements Job {
                     }
                 }
             } catch (URISyntaxException | IOException e) {
-                logger.ifPresent(log -> log.error(e));
+                LOGGER.error(e);
             }
 
         });
 
-        logger.ifPresent(log -> log.debug("Job SplitBrainChecker done."));
+        LOGGER.debug("Job SplitBrainChecker done.");
 
     }
 
     private void warnSplitBrain() {
-        logger.ifPresent(log -> log.warn("Split Brain!!! My Zone [ " +
-                ignite.cluster().hostNames().stream().reduce((t, c) -> t + ", " + c).get() + " ] will remains UP"));
+        LOGGER.warn("Split Brain!!! My Zone [ " +
+                ignite.cluster().hostNames().stream().reduce((t, c) -> t + ", " + c).get() + " ] will remains UP");
     }
 
     private void shutdownNodes() {
         if (errorCounter.incrementAndGet() >= 2) {
-            logger.ifPresent(log -> log.error("Split Brain!!! Shutting down my segment"));
+            LOGGER.error("Split Brain!!! Shutting down my segment");
             ignite.cluster().stopNodes();
         }
     }
@@ -155,7 +155,7 @@ public class SplitBrainCheckerJob implements Job {
                 json = mapper.readTree(response.getBody());
             }
         } catch (RestClientException e) {
-            logger.ifPresent(log -> log.error("Split Brain Check FAILED. " + e.getMessage()));
+            LOGGER.error("Split Brain Check FAILED. " + e.getMessage());
         }
         return json;
     }

@@ -16,10 +16,18 @@
 
 package io.galeb.services.api.sched;
 
-import io.galeb.core.logging.Logger;
 import io.galeb.core.model.Farm;
 import io.galeb.core.services.AbstractService;
-import org.quartz.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.quartz.JobListener;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 import org.quartz.impl.StdSchedulerFactory;
 
 import java.util.UUID;
@@ -30,6 +38,8 @@ import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 public class SplitBrainCheckerScheduler implements JobListener {
+
+    private static final Logger LOGGER = LogManager.getLogger(SplitBrainCheckerScheduler.class);
 
     public static final String PROP_API_CHECK_ENABLE   = PROP_API_PREFIX + "splitbrain.check.enable";
     public static final String PROP_API_CHECK_INTERVAL = PROP_API_PREFIX + "splitbrain.check.interval";
@@ -52,17 +62,11 @@ public class SplitBrainCheckerScheduler implements JobListener {
         }
     }
 
-    private Logger logger;
     private Scheduler scheduler;
     private Farm farm;
 
     public SplitBrainCheckerScheduler setFarm(final Farm farm) {
         this.farm = farm;
-        return this;
-    }
-
-    public SplitBrainCheckerScheduler setLogger(final Logger logger) {
-        this.logger = logger;
         return this;
     }
 
@@ -82,7 +86,7 @@ public class SplitBrainCheckerScheduler implements JobListener {
 
             scheduler.start();
         } catch (SchedulerException e) {
-            logger.error(e);
+            LOGGER.error(e);
         }
     }
 
@@ -93,7 +97,7 @@ public class SplitBrainCheckerScheduler implements JobListener {
                 startChecker(interval);
             }
         } catch (SchedulerException e) {
-            logger.error(e);
+            LOGGER.error(e);
         }
     }
 
@@ -104,8 +108,7 @@ public class SplitBrainCheckerScheduler implements JobListener {
                 .build();
 
         JobDataMap jobdataMap = new JobDataMap();
-        jobdataMap.put(AbstractService.FARM, farm);
-        jobdataMap.put(AbstractService.LOGGER, logger);
+        jobdataMap.put(AbstractService.FARM_KEY, farm);
 
         JobDetail checkerJob = newJob(SplitBrainCheckerJob.class).withIdentity(SplitBrainCheckerJob.class.getName())
                 .setJobData(jobdataMap)
@@ -119,16 +122,16 @@ public class SplitBrainCheckerScheduler implements JobListener {
 
     @Override
     public void jobToBeExecuted(JobExecutionContext context) {
-        logger.debug(context.getJobDetail().getKey().getName()+" to be executed");
+        LOGGER.debug(context.getJobDetail().getKey().getName()+" to be executed");
     }
 
     @Override
     public void jobExecutionVetoed(JobExecutionContext context) {
-        logger.debug(context.getJobDetail().getKey().getName()+" vetoed");
+        LOGGER.debug(context.getJobDetail().getKey().getName()+" vetoed");
     }
 
     @Override
     public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
-        logger.debug(context.getJobDetail().getKey().getName()+" was executed");
+        LOGGER.debug(context.getJobDetail().getKey().getName()+" was executed");
     }
 }
