@@ -32,7 +32,7 @@ import javax.annotation.PostConstruct;
 
 public class Api extends AbstractService {
 
-    private static final Logger LOGGER = LogManager.getLogger(Api.class);
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static final  String PROP_API_PREFIX    = Api.class.getPackage().getName() + ".";
 

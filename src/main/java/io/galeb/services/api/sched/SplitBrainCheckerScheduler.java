@@ -39,7 +39,7 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 public class SplitBrainCheckerScheduler implements JobListener {
 
-    private static final Logger LOGGER = LogManager.getLogger(SplitBrainCheckerScheduler.class);
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static final String PROP_API_CHECK_ENABLE   = PROP_API_PREFIX + "splitbrain.check.enable";
     public static final String PROP_API_CHECK_INTERVAL = PROP_API_PREFIX + "splitbrain.check.interval";

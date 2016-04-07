@@ -52,7 +52,7 @@ import static io.galeb.services.api.sched.SplitBrainCheckerScheduler.PROP_API_PR
 @DisallowConcurrentExecution
 public class SplitBrainCheckerJob implements Job {
 
-    private static final Logger LOGGER = LogManager.getLogger(SplitBrainCheckerJob.class);
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private static IgniteCacheFactory cacheFactory = IgniteCacheFactory.getInstance();
 

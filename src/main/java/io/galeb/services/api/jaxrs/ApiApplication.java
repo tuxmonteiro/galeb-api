@@ -31,7 +31,7 @@ import javax.ws.rs.core.Application;
 @ApplicationPath("/")
 public class ApiApplication extends Application {
 
-    private static final Logger LOGGER = LogManager.getLogger(ApiApplication.class);
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private CacheFactory cacheFactory;
 

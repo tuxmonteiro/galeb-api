@@ -63,7 +63,7 @@ import javax.ws.rs.core.UriInfo;
 @Path("/")
 public class ApiResources {
 
-    private static final Logger LOGGER = LogManager.getLogger(ApiResources.class);
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private static final String VERSION = "3.1.11";
 
