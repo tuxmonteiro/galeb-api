@@ -36,6 +36,8 @@ public class Api extends AbstractService {
 
     public static final  String PROP_API_PREFIX    = Api.class.getPackage().getName() + ".";
 
+    private static final String PROP_API_BIND      = PROP_API_PREFIX + "bind";
+
     private static final String PROP_API_PORT      = PROP_API_PREFIX + "port";
 
     private static final String PROP_API_IOTHREADS = PROP_API_PREFIX + "iothread";
@@ -64,19 +66,20 @@ public class Api extends AbstractService {
 
         splitBrainCheckerScheduler.setFarm(farm).start();
 
-        int port = Integer.parseInt(System.getProperty(PROP_API_PORT));
-        String iothreads = System.getProperty(PROP_API_IOTHREADS);
+        final String bind = System.getProperty(PROP_API_BIND, "0.0.0.0");
+        final int port = Integer.parseInt(System.getProperty(PROP_API_PORT));
+        final String iothreads = System.getProperty(PROP_API_IOTHREADS);
 
         final Map<String, String> options = new HashMap<>();
         options.put("IoThreads", iothreads);
 
-        new Deployer().setHost("0.0.0.0")
+        new Deployer().setHost(bind)
                       .setPort(port)
                       .deploy(new ApiApplication().setManager(this))
                       .setOptions(options)
                       .start();
 
-        LOGGER.debug(String.format("[0.0.0.0:%d] ready", port));
+        LOGGER.info(String.format("API [%s:%d] ready", bind, port));
     }
 
 }
