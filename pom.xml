@@ -3,7 +3,7 @@
 
   <groupId>io.galeb</groupId>
   <artifactId>galeb-api</artifactId>
-  <version>3.2.2-SNAPSHOT</version>
+  <version>3.2.3-SNAPSHOT</version>
 
   <licenses>
     <license>
@@ -20,7 +20,6 @@
     <google.gson.version>2.3.1</google.gson.version>
     <org.jboss.weld.version>2.2.8.Final</org.jboss.weld.version>
     <org.jboss.logging.version>3.2.0.Final</org.jboss.logging.version>
-    <org.apache.logging.log4j.version>2.1</org.apache.logging.log4j.version>
     <org.apache.commons.commons-lang3.version>3.3.2</org.apache.commons.commons-lang3.version>
     <org.quartz-scheduler.version>2.2.1</org.quartz-scheduler.version>
     <jackson-module-jsonSchema.version>2.6.1</jackson-module-jsonSchema.version>
@@ -86,21 +85,6 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <version>${org.apache.logging.log4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <version>${org.apache.logging.log4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-jul</artifactId>
-      <version>${org.apache.logging.log4j.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.quartz-scheduler</groupId>
       <artifactId>quartz</artifactId>
       <version>${org.quartz-scheduler.version}</version>
@@ -109,11 +93,6 @@
       <groupId>org.quartz-scheduler</groupId>
       <artifactId>quartz-jobs</artifactId>
       <version>${org.quartz-scheduler.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
-      <version>${org.apache.logging.log4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -173,14 +152,18 @@
           <executable>java</executable>
           <arguments>
             <argument>-server</argument>
-            <argument>-Xms2048m</argument>
-            <argument>-Xmx2048m</argument>
+            <argument>-Xms1024m</argument>
+            <argument>-Xmx1024m</argument>
             <argument>-Dlog4j.configurationFile=log4j.xml</argument>
             <argument>-Dio.galeb.services.api.port=9090</argument>
+            <argument>-Dio.galeb.cluster.conf=cluster.xml</argument>
             <argument>-DIGNITE_CONFIG_URL=ignite.xml</argument>
             <argument>-DIGNITE_QUIET=false</argument>
             <argument>-DIGNITE_JETTY_PORT=9010</argument>
-            <argument>-Dio.galeb.services.api.splitbrain.check.interval=10000</argument>
+            <argument>-Dcom.sun.management.jmxremote.port=9999</argument>
+            <argument>-Dcom.sun.management.jmxremote.local.only=false</argument>
+            <argument>-Dcom.sun.management.jmxremote.authenticate=false</argument>
+            <argument>-Dcom.sun.management.jmxremote.ssl=false</argument>
             <argument>-jar</argument>
             <argument>target/galeb-api-${project.version}-uber.jar</argument>
           </arguments>
@@ -218,9 +201,10 @@
             <artifactId>cobertura-maven-plugin</artifactId>
             <version>2.7</version>
             <configuration>
-                <formats>
-                    <format>xml</format>
-                </formats>
+              <formats>
+                <format>xml</format>
+              </formats>
+              <check/>
             </configuration>
         </plugin>
     </plugins>
