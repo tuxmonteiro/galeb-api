@@ -128,21 +128,9 @@
             </goals>
             <configuration>
               <outputFile>target/galeb-api-${project.version}-uber.jar</outputFile>
-              <transformers>
-                <transformer
-                        implementation="com.github.edwgiz.mavenShadePlugin.log4j2CacheTransformer.PluginsCacheFileTransformer">
-                </transformer>
-              </transformers>
             </configuration>
           </execution>
         </executions>
-        <dependencies>
-          <dependency>
-            <groupId>com.github.edwgiz</groupId>
-            <artifactId>maven-shade-plugin.log4j2-cachefile-transformer</artifactId>
-            <version>2.1</version>
-          </dependency>
-        </dependencies>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -169,7 +157,6 @@
             <argument>-Dlog4j.configurationFile=log4j.xml</argument>
             <argument>-Dio.galeb.services.api.port=9090</argument>
             <argument>-Dio.galeb.cluster.conf=cluster.xml</argument>
-            <argument>-DIGNITE_CONFIG_URL=ignite.xml</argument>
             <argument>-DIGNITE_QUIET=false</argument>
             <argument>-DIGNITE_JETTY_PORT=9010</argument>
             <argument>-Dcom.sun.management.jmxremote.port=9999</argument>
