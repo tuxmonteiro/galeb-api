@@ -23,6 +23,7 @@ import io.galeb.core.model.Entity;
 import io.galeb.core.model.Farm;
 import io.galeb.core.model.Rule;
 import io.galeb.core.model.VirtualHost;
+import net.sf.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,10 +34,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.lang.management.ManagementFactory;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -335,6 +334,31 @@ public class ApiResources {
         }
         logReceived("/" + entityType + "/" + entityId, entityStr, Method.DELETE);
         return Response.accepted().build();
+    }
+
+    @GET
+    @Path("info")
+    @Produces(MediaType.APPLICATION_JSON)
+    @SuppressWarnings("unchecked")
+    public Response info() {
+        long uptimeJVM = ManagementFactory.getRuntimeMXBean().getUptime();
+        String uptime = getUptimeCommand();
+        String version = getClass().getPackage().getImplementationVersion();
+        String infoJson = new JSONObject().accumulate("uptime", uptime).accumulate("uptime-jvm", uptimeJVM).accumulate("version", version).toString();
+        return Response.ok(infoJson).build();
+    }
+
+    public String getUptimeCommand() {
+        ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", "-c", "uptime");
+        processBuilder.redirectErrorStream(true);
+        try {
+            Process process = processBuilder.start();
+            InputStream stream = process.getInputStream();
+            return convertStreamToString(stream).replace("\n", "");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     private String convertStreamToString(InputStream is) throws IOException {
