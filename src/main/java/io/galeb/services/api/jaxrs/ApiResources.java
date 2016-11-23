@@ -132,8 +132,10 @@ public class ApiResources {
             }
             if (cache != null) {
                 Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
-                return Response.ok("[" + stream.map(Cache.Entry::getValue)
-                        .collect(Collectors.joining(",")) + "]").build();
+                if (stream.count() > 0) {
+                    return Response.ok("[" + stream.map(Cache.Entry::getValue)
+                            .collect(Collectors.joining(",")) + "]").build();
+                }
             }
         }
         return Response.status(Status.NOT_FOUND).build();
@@ -157,10 +159,12 @@ public class ApiResources {
         }
         if (cache != null) {
             Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
-            return Response.ok("[" + stream
-                    .filter(entry -> entry.getKey().startsWith(entityId + Entity.SEP_COMPOUND_ID))
-                    .map(Cache.Entry::getValue)
-                    .collect(Collectors.joining(",")) + "]").build();
+            if (stream.count() > 0) {
+                return Response.ok("[" + stream
+                        .filter(entry -> entry.getKey().startsWith(entityId + Entity.SEP_COMPOUND_ID))
+                        .map(Cache.Entry::getValue)
+                        .collect(Collectors.joining(",")) + "]").build();
+            }
         }
 
         return Response.status(Status.NOT_FOUND).build();
