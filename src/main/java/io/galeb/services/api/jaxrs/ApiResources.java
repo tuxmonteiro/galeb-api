@@ -26,6 +26,7 @@ import io.galeb.core.model.VirtualHost;
 import net.sf.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -130,12 +131,16 @@ public class ApiResources {
                 LOGGER.error(e.getMessage());
                 return Response.status(Status.SERVICE_UNAVAILABLE).build();
             }
-            if (cache != null) {
-                Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
-                if (stream.count() > 0) {
-                    return Response.ok("[" + stream.map(Cache.Entry::getValue)
-                            .collect(Collectors.joining(",")) + "]").build();
+            try {
+                if (cache != null) {
+                    Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
+                    String elements = stream.map(Cache.Entry::getValue).collect(Collectors.joining(","));
+                    if (!StringUtils.isEmpty(elements)) {
+                        return Response.ok("[" + elements +"]").build();
+                    }
                 }
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage());
             }
         }
         return Response.status(Status.NOT_FOUND).build();
@@ -157,14 +162,18 @@ public class ApiResources {
             LOGGER.error(e.getMessage());
             return Response.status(Status.SERVICE_UNAVAILABLE).build();
         }
-        if (cache != null) {
-            Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
-            if (stream.count() > 0) {
-                return Response.ok("[" + stream
-                        .filter(entry -> entry.getKey().startsWith(entityId + Entity.SEP_COMPOUND_ID))
-                        .map(Cache.Entry::getValue)
-                        .collect(Collectors.joining(",")) + "]").build();
+        try {
+            if (cache != null) {
+                Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
+                String elements = stream.filter(entry -> entry.getKey().startsWith(entityId + Entity.SEP_COMPOUND_ID))
+                      .map(Cache.Entry::getValue)
+                      .collect(Collectors.joining(","));
+                if (!StringUtils.isEmpty(elements)) {
+                    return Response.ok("[" + elements + "]").build();
+                }
             }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
         }
 
         return Response.status(Status.NOT_FOUND).build();
