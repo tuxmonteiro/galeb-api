@@ -26,7 +26,6 @@ import io.galeb.core.model.VirtualHost;
 import net.sf.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -168,7 +167,7 @@ public class ApiResources {
                 String elements = stream.filter(entry -> entry.getKey().startsWith(entityId + Entity.SEP_COMPOUND_ID))
                       .map(Cache.Entry::getValue)
                       .collect(Collectors.joining(","));
-                if (!StringUtils.isEmpty(elements)) {
+                if (elements != null && !"".equals(elements)) {
                     return Response.ok("[" + elements + "]").build();
                 }
             }
