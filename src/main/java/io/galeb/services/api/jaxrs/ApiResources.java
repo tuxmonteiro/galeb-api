@@ -134,10 +134,10 @@ public class ApiResources {
             try {
                 if (cache != null) {
                     Stream<Cache.Entry<String, String>> stream = StreamSupport.stream(cache.spliterator(), false);
-                    String elements = stream.map(Cache.Entry::getValue).collect(Collectors.joining(","));
-                    if (!StringUtils.isEmpty(elements)) {
-                        return Response.ok("[" + elements +"]").build();
-                    }
+                    return Response.ok("[" + stream
+                            .filter(entry -> entry.getKey().startsWith(entityId + Entity.SEP_COMPOUND_ID))
+                            .map(Cache.Entry::getValue)
+                            .collect(Collectors.joining(",")) + "]").build();
                 }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage());
